@@ -52,12 +52,24 @@ async function sendNotification(userId, email, title, message, allowEmail = true
     [userId, title, message]
   );
   if (mailer && allowEmail && email) {
+    const senderAddr = process.env.SMTP_FROM || process.env.SMTP_USER;
     try {
       await mailer.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        from: senderAddr,
+        replyTo: process.env.SMTP_USER,
         to: email,
-        subject: `Free Faucet — ${title}`,
-        text: `${message}\n\n1,000 Points = $1.00`
+        subject: `Free Faucet: ${title}`,
+        text: `Hello,\n\n${message}\n\nRate: 1,000 Points = $1.00.\nIf you did not request this, you can safely ignore this message.\n\n— Free Faucet Team`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; color: #1e293b;">
+            <h2 style="color: #1877f2; margin-top: 0;">Free Faucet</h2>
+            <h3 style="margin-bottom: 8px;">${title}</h3>
+            <p style="line-height: 1.5; font-size: 14px;">${message}</p>
+            <p style="font-size: 12px; color: #475569;">Exchange rate: <strong>1,000 Points = $1.00</strong>.</p>
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 18px 0;" />
+            <p style="font-size: 12px; color: #64748b;">You received this account notification from Free Faucet.</p>
+          </div>
+        `
       });
     } catch (e) {
       console.error('Email send error:', e.message);
@@ -67,11 +79,17 @@ async function sendNotification(userId, email, title, message, allowEmail = true
 
 async function awardPointsWithReferral(client, userId, points) {
   if (points <= 0) return;
-  const uRes = await client.query('UPDATE users SET points_balance = points_balance + $1 WHERE id = $2 RETURNING referred_by', [points, userId]);
+  const uRes = await client.query(
+    'UPDATE users SET points_balance = points_balance + $1 WHERE id = $2 RETURNING referred_by',
+    [points, userId]
+  );
   const refId = uRes.rows[0] && uRes.rows[0].referred_by;
   if (refId) {
     const refBonus = Math.max(1, Math.floor(points * 0.10)); // 10% referral commission
-    await client.query('UPDATE users SET points_balance = points_balance + $1 WHERE id = $2', [refBonus, refId]);
+    await client.query(
+      'UPDATE users SET points_balance = points_balance + $1 WHERE id = $2',
+      [refBonus, refId]
+    );
   }
 }
 
@@ -250,7 +268,7 @@ app.post('/auth/signup', async (req, res) => {
     const finalCode = `FF${1000 + newUserId}`;
     await pool.query('UPDATE users SET referral_code = $1 WHERE id = $2', [finalCode, newUserId]);
 
-    await sendNotification(newUserId, cleanEmail, 'Welcome to Free Faucet!', 'Your account is active. 1,000 Points = $1.00.', true);
+    await sendNotification(newUserId, cleanEmail, 'Welcome to Free Faucet', 'Your account is active. Rate: 1,000 Points = $1.00.', true);
     req.session.userId = newUserId;
     res.redirect('/');
   } catch (err) {
@@ -299,13 +317,12 @@ app.post('/auth/forgot-password', async (req, res) => {
     [u.id, token]
   );
 
-  await sendNotification(u.id, u.email, 'Password Reset Requested', `Reset token: ${token} (valid 1 hour).`, true);
+  await sendNotification(u.id, u.email, 'Password Reset Token', `Use this reset token within 1 hour: ${token}`, true);
 
-  // If SMTP is not configured, pass token in query so user can test immediately; if SMTP is active, email is sent
   if (!mailer) {
     return res.redirect('/?reset_token=' + token + '&msg=' + encodeURIComponent('Reset token generated below (SMTP not configured).'));
   }
-  res.redirect('/?msg=' + encodeURIComponent('Password reset instructions sent to your email.'));
+  res.redirect('/?msg=' + encodeURIComponent('Password reset email sent. Check your Inbox (and Spam folder if needed).'));
 });
 
 // Reset Password with Token
@@ -350,7 +367,7 @@ app.post('/api/notifications/read', async (req, res) => {
   res.redirect('/?tab=inbox');
 });
 
-// User Adds USDT Balance -> Goes to Single Central Admin Wallet & Credits Ad Credits (1,000 pts = $1.00)
+// User Adds USDT Balance -> Single Central Admin Wallet & Credits Ad Credits (1,000 pts = $1.00)
 app.post('/api/wallet/deposit-usdt', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   const usdtAmt = parseFloat(req.body.usdt_amount);
@@ -360,7 +377,7 @@ app.post('/api/wallet/deposit-usdt', async (req, res) => {
     return res.redirect('/?tab=advertise&msg=' + encodeURIComponent('Minimum USDT deposit is $0.10 (100 Ad Credits).'));
   }
 
-  const pointsAdded = Math.floor(usdtAmt * 1000); // 1,000 pts = $1.00
+  const pointsAdded = Math.floor(usdtAmt * 1000);
   const client = await pool.connect();
 
   try {
@@ -519,7 +536,7 @@ app.post('/api/withdraw/request', async (req, res) => {
     return res.redirect('/?tab=withdraw&msg=' + encodeURIComponent('Please enter your USDT or FaucetPay wallet address.'));
   }
 
-  const usdAmount = Number((points / 1000).toFixed(4)); // 1,000 pts = $1.00
+  const usdAmount = Number((points / 1000).toFixed(4));
   const client = await pool.connect();
 
   try {
@@ -531,7 +548,6 @@ app.post('/api/withdraw/request', async (req, res) => {
       return res.redirect('/?tab=withdraw&msg=' + encodeURIComponent('Insufficient points balance.'));
     }
 
-    // Hold points while awaiting Admin approval
     await client.query('UPDATE users SET points_balance = points_balance - $1, faucetpay_address = $2 WHERE id = $3', [points, walletAddress, req.session.userId]);
     await client.query(
       `INSERT INTO withdrawals (user_id, points_amount, usd_amount, payout_method, wallet_address, status)
@@ -760,7 +776,6 @@ app.post('/api/admin/withdrawals/review', async (req, res) => {
         "UPDATE withdrawals SET status = 'rejected', admin_note = $1, reviewed_at = NOW() WHERE id = $2",
         [(admin_note || 'Rejected by Admin').trim(), withdrawal_id]
       );
-      // Refund points back to user balance when rejected
       await client.query('UPDATE users SET points_balance = points_balance + $1 WHERE id = $2', [wd.points_amount, wd.user_id]);
     }
     await client.query('COMMIT');
