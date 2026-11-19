@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>Free Faucet — Earn & Advertise</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -10,7 +10,7 @@
   </script>
   <style>
     @keyframes panelEnter {
-      0% { opacity: 0; transform: translateY(12px) scale(0.99); }
+      0% { opacity: 0; transform: translateY(10px) scale(0.99); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
     @keyframes softPulse {
@@ -27,7 +27,7 @@
     }
 
     .anim-panel {
-      animation: panelEnter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation: panelEnter 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
     .anim-float {
       animation: floatSlow 3.6s ease-in-out infinite;
@@ -36,50 +36,48 @@
       animation: softPulse 2.8s infinite;
     }
 
-    /* Hover & Click Motion on Cards */
     .ui-card {
       position: relative;
       overflow: hidden;
-      transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
-                  box-shadow 0.24s cubic-bezier(0.22, 1, 0.36, 1),
-                  border-color 0.24s ease;
+      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+                  box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+                  border-color 0.22s ease;
     }
     .ui-card::after {
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.22) 50%, transparent 80%);
+      background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.2) 50%, transparent 80%);
       transform: translateX(-120%);
       transition: transform 0.55s ease;
       pointer-events: none;
     }
     .ui-card:hover {
-      transform: translateY(-4px) scale(1.01);
-      box-shadow: 0 14px 28px -8px rgba(109, 90, 219, 0.24);
+      transform: translateY(-3px);
+      box-shadow: 0 14px 26px -8px rgba(109, 90, 219, 0.22);
     }
     .ui-card:hover::after {
       transform: translateX(120%);
     }
     .ui-card:active {
-      transform: translateY(-1px) scale(0.985);
+      transform: scale(0.985);
     }
 
-    /* Tactile Hover & Click Press + Ripple */
     .ui-press {
       position: relative;
       overflow: hidden;
-      transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1),
+      touch-action: manipulation;
+      transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1),
                   box-shadow 0.2s ease,
                   background-color 0.2s ease,
                   color 0.2s ease;
     }
     .ui-press:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 14px -4px rgba(109, 90, 219, 0.35);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px -4px rgba(109, 90, 219, 0.32);
     }
     .ui-press:active {
       transform: scale(0.95);
-      box-shadow: 0 2px 6px -2px rgba(109, 90, 219, 0.25);
     }
     .click-ripple {
       position: absolute;
@@ -107,45 +105,44 @@
     }
   </style>
 </head>
-<body class="ui-canvas-bg text-slate-800 dark:text-slate-100 min-h-screen font-sans pb-24 transition-colors duration-200">
+<body class="ui-canvas-bg text-slate-800 dark:text-slate-100 min-h-screen font-sans pb-24 transition-colors duration-200 overflow-x-hidden">
 
   <% if (flashMsg) { %>
-    <div id="flashBanner" class="anim-panel bg-amber-300 text-slate-950 text-xs sm:text-sm font-semibold px-4 py-2.5 flex items-center justify-between shadow">
-      <span><%= flashMsg %></span>
-      <button onclick="document.getElementById('flashBanner').remove()" class="ui-press font-bold px-2.5 py-0.5 rounded bg-black/10">✕</button>
+    <div id="flashBanner" class="anim-panel bg-amber-300 text-slate-950 text-xs sm:text-sm font-semibold px-3 sm:px-5 py-2.5 flex items-center justify-between gap-2 shadow">
+      <span class="break-words"><%= flashMsg %></span>
+      <button onclick="document.getElementById('flashBanner').remove()" class="ui-press shrink-0 font-bold px-2.5 py-0.5 rounded bg-black/10">✕</button>
     </div>
   <% } %>
 
   <% if (!user) { %>
-    <!-- AUTH VIEW -->
     <div class="min-h-screen flex flex-col">
-      <div class="bg-gradient-to-r from-[#7e6be6] via-[#6e59db] to-[#8f7ef0] text-white h-16 px-6 flex items-center justify-between shadow-md">
-        <div class="flex items-center space-x-3">
-          <span class="bg-white text-[#6e59db] font-black px-3 py-1 rounded-xl text-base shadow avatar-ring">FF</span>
-          <span class="font-extrabold text-xl tracking-tight">Free Faucet</span>
-        </div>
+      <div class="bg-gradient-to-r from-[#7e6be6] via-[#6e59db] to-[#8f7ef0] text-white h-14 sm:h-16 px-4 sm:px-6 flex items-center justify-between shadow-md">
         <div class="flex items-center space-x-2.5">
-          <span class="text-xs bg-white/20 backdrop-blur px-3 py-1 rounded-full font-semibold">1,000 Points = $1.00</span>
-          <button onclick="toggleTheme()" class="ui-press text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full font-semibold">🌓 Theme</button>
+          <span class="bg-white text-[#6e59db] font-black px-2.5 py-1 rounded-xl text-sm sm:text-base shadow avatar-ring">FF</span>
+          <span class="font-extrabold text-lg sm:text-xl tracking-tight">Free Faucet</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="hidden xs:inline-block sm:inline-block text-[11px] sm:text-xs bg-white/20 px-3 py-1 rounded-full font-semibold">1,000 pts = $1.00</span>
+          <button onclick="toggleTheme()" class="ui-press text-xs bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-full font-semibold">🌓</button>
         </div>
       </div>
 
-      <div class="flex-1 flex items-center justify-center p-4">
-        <div class="anim-panel ui-card w-full max-w-md bg-white/95 dark:bg-slate-900/95 rounded-3xl border border-purple-200/70 dark:border-slate-800 shadow-xl p-6 sm:p-7">
+      <div class="flex-1 flex items-center justify-center p-3 sm:p-6">
+        <div class="anim-panel ui-card w-full max-w-md bg-white/95 dark:bg-slate-900/95 rounded-2xl sm:rounded-3xl border border-purple-200/70 dark:border-slate-800 shadow-xl p-5 sm:p-7">
           <div class="flex border-b border-slate-200 dark:border-slate-800 mb-5 text-xs sm:text-sm font-bold">
             <button onclick="authTab('login')" id="atab-login" class="ui-press flex-1 pb-2.5 text-[#6e59db] border-b-2 border-[#6e59db] rounded-t">Login</button>
             <button onclick="authTab('signup')" id="atab-signup" class="ui-press flex-1 pb-2.5 text-slate-500 rounded-t">Sign Up</button>
-            <button onclick="authTab('forgot')" id="atab-forgot" class="ui-press flex-1 pb-2.5 text-slate-500 rounded-t">Forgot Password</button>
+            <button onclick="authTab('forgot')" id="atab-forgot" class="ui-press flex-1 pb-2.5 text-slate-500 rounded-t">Forgot</button>
           </div>
 
           <form id="aform-login" action="/auth/login" method="POST" class="space-y-3.5">
             <div>
               <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Email</label>
-              <input type="email" name="email" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7e6be6]">
+              <input type="email" name="email" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm">
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Password</label>
-              <input type="password" name="password" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7e6be6]">
+              <input type="password" name="password" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm">
             </div>
             <button type="submit" class="ui-press w-full bg-gradient-to-r from-[#7e6be6] to-[#6550d4] text-white font-bold py-2.5 rounded-xl text-sm shadow">Login to Free Faucet</button>
           </form>
@@ -153,19 +150,19 @@
           <form id="aform-signup" action="/auth/signup" method="POST" class="space-y-3.5 hidden">
             <div>
               <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Email</label>
-              <input type="email" name="email" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7e6be6]">
+              <input type="email" name="email" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm">
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Password</label>
-              <input type="password" name="password" required minlength="6" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7e6be6]">
+              <input type="password" name="password" required minlength="6" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm">
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">USDT / FaucetPay Address (Optional)</label>
-              <input type="text" name="faucetpay_address" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7e6be6]">
+              <input type="text" name="faucetpay_address" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm">
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Referral Code or 6-Digit ID (Optional)</label>
-              <input type="text" name="ref_code" value="<%= refCode %>" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7e6be6]">
+              <input type="text" name="ref_code" value="<%= refCode %>" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm">
             </div>
             <button type="submit" class="ui-press w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold py-2.5 rounded-xl text-sm shadow">Create Free Account</button>
           </form>
@@ -204,32 +201,35 @@
   <% } else { %>
     <% const unreadCount = notifications.filter(n => !n.is_read).length; %>
 
-    <div class="max-w-[1440px] mx-auto p-2 sm:p-4 lg:p-6">
+    <!-- Mobile Backdrop for Slide-Out Drawer -->
+    <div id="mobileDrawerBackdrop" onclick="closeMobileDrawer()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 hidden lg:hidden"></div>
+
+    <div class="max-w-[1440px] mx-auto p-2.5 sm:p-4 lg:p-6">
       <div class="flex flex-col lg:flex-row gap-4 lg:gap-5 items-start">
 
-        <!-- LEFT LAVENDER SIDEBAR (SAMPLE INSPIRED) -->
-        <aside id="leftSidebar" class="w-full lg:w-64 bg-gradient-to-b from-[#8572ec] via-[#7460de] to-[#634ecf] text-white rounded-3xl p-4 shadow-xl shrink-0 flex flex-col justify-between transition-all duration-300">
-          <div class="space-y-4 text-xs">
-            <!-- Profile Logo & Welcome Block -->
+        <!-- RESPONSIVE LEFT LAVENDER SIDEBAR (DRAWER ON MOBILE/TABLET, STICKY ON DESKTOP) -->
+        <aside id="leftSidebar" class="fixed lg:sticky top-0 lg:top-4 left-0 z-50 h-screen lg:h-auto w-72 sm:w-80 lg:w-64 bg-gradient-to-b from-[#8572ec] via-[#7460de] to-[#634ecf] text-white rounded-none lg:rounded-3xl p-4 shadow-2xl lg:shadow-xl shrink-0 flex flex-col justify-between overflow-y-auto -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-out">
+          <div class="space-y-3.5 text-xs">
             <div class="flex items-center justify-between">
-              <button onclick="showSection('home')" class="ui-press flex items-center space-x-2 text-left">
+              <button onclick="showSection('home'); closeMobileDrawer();" class="ui-press flex items-center space-x-2 text-left">
                 <span class="bg-white text-[#634ecf] font-black px-2.5 py-1 rounded-xl text-sm shadow">FF</span>
                 <span class="font-extrabold text-base tracking-tight">Free Faucet</span>
               </button>
-              <button onclick="toggleSidebar()" class="lg:hidden ui-press bg-white/15 px-2.5 py-1 rounded-lg text-xs">☰</button>
+              <button onclick="closeMobileDrawer()" class="lg:hidden ui-press bg-white/15 px-2.5 py-1 rounded-lg text-xs font-bold">✕</button>
             </div>
 
-            <div onclick="showSection('profile')" class="ui-press cursor-pointer flex flex-col items-center text-center p-3.5 rounded-2xl bg-white/15 backdrop-blur border border-white/20">
-              <div class="w-14 h-14 rounded-full bg-white text-[#634ecf] font-black flex items-center justify-center text-xl shadow-md avatar-ring mb-2">
+            <div onclick="showSection('profile'); closeMobileDrawer();" class="ui-press cursor-pointer flex items-center lg:flex-col lg:text-center gap-3 lg:gap-0 p-3 rounded-2xl bg-white/15 backdrop-blur border border-white/20">
+              <div class="w-11 h-11 lg:w-14 lg:h-14 rounded-full bg-white text-[#634ecf] font-black flex items-center justify-center text-lg lg:text-xl shadow-md avatar-ring lg:mb-2 shrink-0">
                 <%= user.email.charAt(0).toUpperCase() %>
               </div>
-              <div class="font-extrabold text-sm truncate max-w-full"><%= user.email %></div>
-              <div class="text-[11px] text-purple-100 mt-0.5">ID: <%= user.public_id %> • <%= isAdmin ? 'Admin' : 'Member' %></div>
+              <div class="min-w-0">
+                <div class="font-extrabold text-sm truncate max-w-[180px] lg:max-w-full"><%= user.email %></div>
+                <div class="text-[11px] text-purple-100 mt-0.5">ID: <%= user.public_id %> • <%= isAdmin ? 'Admin' : 'Member' %></div>
+              </div>
             </div>
 
-            <!-- Navigation Menu -->
             <nav id="sidebarNavItems" class="space-y-1">
-              <button onclick="showSection('home')" data-nav="home" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white text-[#5d48c9] font-extrabold shadow-sm">
+              <button onclick="showSection('home'); closeMobileDrawer();" data-nav="home" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white text-[#5d48c9] font-extrabold shadow-sm">
                 <span class="flex items-center space-x-2.5"><span>🏠</span><span>Home</span></span>
               </button>
 
@@ -240,57 +240,57 @@
                   <span id="tasksChevron" class="text-[10px]">▼</span>
                 </button>
                 <div id="tasksDropdownMenu" class="ml-4 pl-3 border-l border-white/30 space-y-1 mt-1">
-                  <button onclick="showSection('tasks-view')" data-nav="tasks-view" class="nav-btn ui-press w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-white/90 hover:bg-white/15">
+                  <button onclick="showSection('tasks-view'); closeMobileDrawer();" data-nav="tasks-view" class="nav-btn ui-press w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-white/90 hover:bg-white/15">
                     <span>• View Task</span>
-                    <span class="bg-white/20 px-1.5 py-0.2 rounded-full text-[10px] font-bold"><%= microTasks.length %></span>
+                    <span class="bg-white/20 px-1.5 py-0.5 rounded-full text-[10px] font-bold"><%= microTasks.length %></span>
                   </button>
-                  <button onclick="showSection('tasks-submissions')" data-nav="tasks-submissions" class="nav-btn ui-press w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-white/90 hover:bg-white/15">
+                  <button onclick="showSection('tasks-submissions'); closeMobileDrawer();" data-nav="tasks-submissions" class="nav-btn ui-press w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-white/90 hover:bg-white/15">
                     <span>• My Submission</span>
-                    <span class="bg-white/20 px-1.5 py-0.2 rounded-full text-[10px] font-bold"><%= submissions.length %></span>
+                    <span class="bg-white/20 px-1.5 py-0.5 rounded-full text-[10px] font-bold"><%= submissions.length %></span>
                   </button>
-                  <button onclick="showSection('tasks-disputes')" data-nav="tasks-disputes" class="nav-btn ui-press w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-white/90 hover:bg-white/15">
+                  <button onclick="showSection('tasks-disputes'); closeMobileDrawer();" data-nav="tasks-disputes" class="nav-btn ui-press w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-white/90 hover:bg-white/15">
                     <span>• My Disputes</span>
-                    <span class="bg-amber-300 text-slate-950 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold"><%= disputes.length %></span>
+                    <span class="bg-amber-300 text-slate-950 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold"><%= disputes.length %></span>
                   </button>
                 </div>
               </div>
 
               <!-- SHORTLINKS -->
-              <button onclick="showSection('shortlinks')" data-nav="shortlinks" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
+              <button onclick="showSection('shortlinks'); closeMobileDrawer();" data-nav="shortlinks" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
                 <span class="flex items-center space-x-2.5"><span>🔗</span><span>Shortlinks</span></span>
                 <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold"><%= shortlinks.length %></span>
               </button>
 
-              <button onclick="showSection('clicks')" data-nav="clicks" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
+              <button onclick="showSection('clicks'); closeMobileDrawer();" data-nav="clicks" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
                 <span class="flex items-center space-x-2.5"><span>🖱️</span><span>Clicks</span></span>
                 <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold"><%= ptcAds.length %></span>
               </button>
 
-              <button onclick="showSection('surveys')" data-nav="surveys" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
+              <button onclick="showSection('surveys'); closeMobileDrawer();" data-nav="surveys" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
                 <span class="flex items-center space-x-2.5"><span>📊</span><span>Surveys</span></span>
               </button>
 
-              <button onclick="showSection('advertise')" data-nav="advertise" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
+              <button onclick="showSection('advertise'); closeMobileDrawer();" data-nav="advertise" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
                 <span class="flex items-center space-x-2.5"><span>💵</span><span>Buy Points / Ads</span></span>
               </button>
 
-              <button onclick="showSection('referrals')" data-nav="referrals" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
+              <button onclick="showSection('referrals'); closeMobileDrawer();" data-nav="referrals" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
                 <span class="flex items-center space-x-2.5"><span>👥</span><span>Referrals</span></span>
                 <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold"><%= referrals.length %></span>
               </button>
 
-              <button onclick="showSection('withdraw')" data-nav="withdraw" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
+              <button onclick="showSection('withdraw'); closeMobileDrawer();" data-nav="withdraw" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
                 <span class="flex items-center space-x-2.5"><span>💳</span><span>Withdraw</span></span>
               </button>
 
-              <button onclick="showSection('inbox')" data-nav="inbox" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
+              <button onclick="showSection('inbox'); closeMobileDrawer();" data-nav="inbox" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/95 hover:bg-white/15 font-medium">
                 <span class="flex items-center space-x-2.5"><span>📥</span><span>Inbox</span></span>
                 <% if (unreadCount > 0) { %><span class="bg-rose-500 text-white px-2 py-0.5 rounded-full text-[10px] font-extrabold"><%= unreadCount %></span><% } %>
               </button>
 
               <% if (isAdmin) { %>
                 <div class="pt-2 mt-2 border-t border-white/20">
-                  <button onclick="showSection('admin')" data-nav="admin" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-amber-300 text-slate-950 font-extrabold shadow">
+                  <button onclick="showSection('admin'); closeMobileDrawer();" data-nav="admin" class="nav-btn ui-press w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-amber-300 text-slate-950 font-extrabold shadow">
                     <span>🛡️ Admin Panel</span>
                     <span class="bg-slate-950 text-amber-300 px-2 py-0.5 rounded-full text-[10px]">
                       <%= stats.pendingProofs + stats.pendingAds + stats.pendingWithdrawals + stats.openDisputes %>
@@ -307,26 +307,26 @@
           </div>
         </aside>
 
-        <!-- MAIN WORKSPACE CONTAINER (SAMPLE INSPIRED) -->
-        <div class="flex-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded-3xl border border-purple-100 dark:border-slate-800 shadow-lg p-4 sm:p-6 min-w-0">
+        <!-- MAIN WORKSPACE -->
+        <div class="flex-1 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur rounded-2xl sm:rounded-3xl border border-purple-100 dark:border-slate-800 shadow-lg p-3.5 sm:p-6 min-w-0">
 
-          <!-- Top Header Bar Inside Workspace -->
-          <header class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-slate-200/80 dark:border-slate-800">
-            <div class="flex items-center space-x-3">
-              <h2 id="workspaceHeading" class="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-800 dark:text-white">Home</h2>
-              <span class="hidden sm:inline-block text-xs bg-purple-100 dark:bg-purple-950 text-[#6e59db] dark:text-purple-300 font-bold px-3 py-1 rounded-full">
-                User ID: <%= user.public_id %>
+          <header class="flex flex-wrap items-center justify-between gap-2.5 pb-4 mb-5 border-b border-slate-200/80 dark:border-slate-800">
+            <div class="flex items-center space-x-2.5 min-w-0">
+              <button onclick="openMobileDrawer()" class="lg:hidden ui-press bg-purple-100 dark:bg-purple-950 text-[#6e59db] dark:text-purple-300 px-3 py-1.5 rounded-xl text-sm font-extrabold">☰</button>
+              <h2 id="workspaceHeading" class="text-lg sm:text-2xl font-extrabold tracking-tight text-slate-800 dark:text-white truncate">Home</h2>
+              <span class="hidden sm:inline-block text-xs bg-purple-100 dark:bg-purple-950 text-[#6e59db] dark:text-purple-300 font-bold px-3 py-1 rounded-full shrink-0">
+                ID: <%= user.public_id %>
               </span>
             </div>
 
-            <div class="flex items-center flex-wrap gap-2 text-xs font-bold">
-              <div class="ui-card bg-purple-50 dark:bg-purple-950/60 border border-purple-200/80 dark:border-purple-800 px-3 py-1.5 rounded-full text-[#5d48c9] dark:text-purple-200">
+            <div class="flex items-center flex-wrap gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold">
+              <div class="ui-card bg-purple-50 dark:bg-purple-950/60 border border-purple-200/80 dark:border-purple-800 px-2.5 sm:px-3 py-1.5 rounded-full text-[#5d48c9] dark:text-purple-200">
                 Earn: <%= user.points_balance %> pts ($<%= (user.points_balance / 1000).toFixed(2) %>)
               </div>
-              <div class="ui-card bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800 px-3 py-1.5 rounded-full text-amber-800 dark:text-amber-300">
-                Ad Credits: <%= user.advertiser_balance %> pts ($<%= (user.advertiser_balance / 1000).toFixed(2) %>)
+              <div class="ui-card bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800 px-2.5 sm:px-3 py-1.5 rounded-full text-amber-800 dark:text-amber-300">
+                Ads: <%= user.advertiser_balance %> pts ($<%= (user.advertiser_balance / 1000).toFixed(2) %>)
               </div>
-              <button onclick="toggleTheme()" title="Toggle Light/Dark Theme" class="ui-press bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 rounded-full">🌓</button>
+              <button onclick="toggleTheme()" title="Toggle Light/Dark Theme" class="ui-press bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-2.5 py-1.5 rounded-full">🌓</button>
               <button onclick="showSection('profile')" title="Profile" class="ui-press bg-[#7e6be6] text-white w-8 h-8 rounded-full font-extrabold flex items-center justify-center shadow">
                 <%= user.email.charAt(0).toUpperCase() %>
               </button>
@@ -334,27 +334,27 @@
           </header>
 
           <!-- Active PTC Timer Banner -->
-          <div id="ptcTimerBox" class="anim-panel hidden mb-5 bg-amber-100 border border-amber-300 text-amber-950 p-4 rounded-2xl flex items-center justify-between text-sm shadow-sm">
-            <div><strong>PTC Timer Running:</strong> Keep ad tab open — <span id="ptcCountdown" class="font-black text-lg">15</span>s remaining</div>
+          <div id="ptcTimerBox" class="anim-panel hidden mb-5 bg-amber-100 border border-amber-300 text-amber-950 p-3.5 sm:p-4 rounded-2xl flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm shadow-sm">
+            <div><strong>PTC Timer Running:</strong> Keep ad tab open — <span id="ptcCountdown" class="font-black text-base sm:text-lg">15</span>s left</div>
             <button id="ptcClaimBtn" onclick="claimPtcReward()" class="ui-press hidden bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl text-xs shadow">Claim Points</button>
           </div>
 
-          <!-- HOME SECTION -->
-          <section id="sec-home" class="page-section anim-panel space-y-6">
-            <!-- Hero Banner (Sample Inspired Lavender Banner) -->
-            <div class="ui-card rounded-3xl bg-gradient-to-r from-[#8b78f0] via-[#7a66e3] to-[#9887f5] text-white p-5 sm:p-6 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <!-- HOME -->
+          <section id="sec-home" class="page-section anim-panel space-y-5">
+            <div class="ui-card rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#8b78f0] via-[#7a66e3] to-[#9887f5] text-white p-4 sm:p-6 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div class="space-y-1.5 max-w-xl">
                 <span class="inline-block text-[11px] bg-white/20 px-3 py-0.5 rounded-full font-semibold">User ID: <%= user.public_id %> • 1,000 Points = $1.00</span>
-                <h3 class="text-xl sm:text-2xl font-extrabold">Welcome to Free Faucet!</h3>
+                <h3 class="text-lg sm:text-2xl font-extrabold">Welcome to Free Faucet!</h3>
                 <p class="text-xs sm:text-sm text-purple-100">
                   Complete tasks, shortlinks, and PTC clicks to earn points, or add USDT balance to the central admin wallet to launch campaigns.
                 </p>
                 <div class="pt-2 flex flex-wrap gap-2">
                   <button onclick="showSection('tasks-view')" class="ui-press bg-white text-[#5d48c9] font-extrabold px-4 py-2 rounded-xl text-xs shadow">▶ Start Tasks</button>
-                  <button onclick="showSection('advertise')" class="ui-press bg-white/20 hover:bg-white/30 text-white font-bold px-4 py-2 rounded-xl text-xs border border-white/30">+ Add USDT / Advertise</button>
+                  <button onclick="showSection('shortlinks')" class="ui-press bg-emerald-400 text-slate-950 font-extrabold px-4 py-2 rounded-xl text-xs shadow">🔗 Shortlinks</button>
+                  <button onclick="showSection('advertise')" class="ui-press bg-white/20 hover:bg-white/30 text-white font-bold px-4 py-2 rounded-xl text-xs border border-white/30">+ Add USDT</button>
                 </div>
               </div>
-              <div class="anim-float hidden sm:flex items-center space-x-3 bg-white/15 backdrop-blur px-4 py-3 rounded-2xl border border-white/20">
+              <div class="anim-float hidden md:flex items-center space-x-3 bg-white/15 backdrop-blur px-4 py-3 rounded-2xl border border-white/20 shrink-0">
                 <div class="text-right">
                   <div class="text-[11px] text-purple-100">Exchange Rate</div>
                   <div class="text-base font-black">1,000 PTS = $1.00</div>
@@ -363,43 +363,41 @@
               </div>
             </div>
 
-            <!-- 4 Pastel Stat Cards (Sample Inspired) -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-              <div class="ui-card rounded-2xl p-4 bg-purple-100/80 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800/60">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div class="ui-card rounded-2xl p-3.5 sm:p-4 bg-purple-100/80 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800/60">
                 <div class="flex items-center justify-between text-xs font-bold text-[#5d48c9] dark:text-purple-300">
                   <span>Earn Balance</span><span>💰</span>
                 </div>
-                <div class="text-2xl font-black text-slate-900 dark:text-white mt-2">$<%= (user.points_balance / 1000).toFixed(2) %></div>
-                <div class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5"><%= user.points_balance %> pts</div>
+                <div class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1.5">$<%= (user.points_balance / 1000).toFixed(2) %></div>
+                <div class="text-[11px] text-slate-600 dark:text-slate-400"><%= user.points_balance %> pts</div>
               </div>
 
-              <div class="ui-card rounded-2xl p-4 bg-rose-100/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60">
+              <div class="ui-card rounded-2xl p-3.5 sm:p-4 bg-rose-100/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60">
                 <div class="flex items-center justify-between text-xs font-bold text-rose-700 dark:text-rose-300">
                   <span>Ad Credits</span><span>📢</span>
                 </div>
-                <div class="text-2xl font-black text-slate-900 dark:text-white mt-2">$<%= (user.advertiser_balance / 1000).toFixed(2) %></div>
-                <div class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5"><%= user.advertiser_balance %> pts</div>
+                <div class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1.5">$<%= (user.advertiser_balance / 1000).toFixed(2) %></div>
+                <div class="text-[11px] text-slate-600 dark:text-slate-400"><%= user.advertiser_balance %> pts</div>
               </div>
 
-              <div class="ui-card rounded-2xl p-4 bg-emerald-100/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60">
+              <div class="ui-card rounded-2xl p-3.5 sm:p-4 bg-emerald-100/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60">
                 <div class="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-emerald-300">
                   <span>Tasks & Links</span><span>⚡</span>
                 </div>
-                <div class="text-2xl font-black text-slate-900 dark:text-white mt-2"><%= microTasks.length + shortlinks.length + ptcAds.length %></div>
-                <div class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5"><%= microTasks.length %> tasks • <%= shortlinks.length %> links</div>
+                <div class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1.5"><%= microTasks.length + shortlinks.length + ptcAds.length %></div>
+                <div class="text-[11px] text-slate-600 dark:text-slate-400"><%= microTasks.length %> tasks • <%= shortlinks.length %> links</div>
               </div>
 
-              <div class="ui-card rounded-2xl p-4 bg-sky-100/80 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/60">
+              <div class="ui-card rounded-2xl p-3.5 sm:p-4 bg-sky-100/80 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/60">
                 <div class="flex items-center justify-between text-xs font-bold text-sky-700 dark:text-sky-300">
                   <span>Referrals</span><span>👥</span>
                 </div>
-                <div class="text-2xl font-black text-slate-900 dark:text-white mt-2"><%= referrals.length %></div>
-                <div class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">10% bonus active</div>
+                <div class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1.5"><%= referrals.length %></div>
+                <div class="text-[11px] text-slate-600 dark:text-slate-400">10% bonus active</div>
               </div>
             </div>
 
-            <!-- Featured Cards Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-4">
               <% microTasks.forEach(task => { %>
                 <div class="ui-card bg-white dark:bg-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-2xl overflow-hidden flex flex-col justify-between">
                   <div>
@@ -449,14 +447,14 @@
             <% microTasks.forEach(task => { %>
               <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
                 <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
-                  <h3 class="font-bold text-base"><%= task.title %></h3>
+                  <h3 class="font-bold text-sm sm:text-base"><%= task.title %></h3>
                   <span class="bg-purple-100 dark:bg-purple-950 text-[#6e59db] dark:text-purple-300 font-extrabold px-3 py-1 rounded-full text-xs">
                     +<%= task.reward_points %> pts ($<%= (task.reward_points / 1000).toFixed(2) %>)
                   </span>
                 </div>
                 <p class="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line mb-2"><%= task.instructions %></p>
                 <p class="text-xs text-amber-700 dark:text-amber-300 font-semibold mb-3">Required Proof: <%= task.proof_required %> (Slots left: <%= task.remaining_slots %>)</p>
-                <form action="/api/tasks/submit" method="POST" class="grid sm:grid-cols-3 gap-2.5">
+                <form action="/api/tasks/submit" method="POST" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <input type="hidden" name="task_id" value="<%= task.id %>">
                   <input type="text" name="proof_text" required placeholder="Proof text / @username" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs">
                   <input type="url" name="screenshot_url" placeholder="Screenshot URL (optional)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs">
@@ -472,11 +470,11 @@
               <% if (submissions.length === 0) { %><p class="text-slate-500">No submissions yet.</p><% } %>
               <% submissions.forEach(s => { %>
                 <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-wrap justify-between items-center gap-2">
-                  <div>
-                    <div class="font-bold">#<%= s.id %> — <%= s.title %> (+<%= s.reward_points %> pts / $<%= (s.reward_points / 1000).toFixed(2) %>)</div>
-                    <div class="text-slate-500">Proof: <%= s.proof_text %></div>
+                  <div class="min-w-0">
+                    <div class="font-bold truncate">#<%= s.id %> — <%= s.title %> (+<%= s.reward_points %> pts / $<%= (s.reward_points / 1000).toFixed(2) %>)</div>
+                    <div class="text-slate-500 break-all">Proof: <%= s.proof_text %></div>
                   </div>
-                  <span class="font-bold uppercase px-2.5 py-1 rounded-full <%= s.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : (s.status === 'rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800') %>"><%= s.status %></span>
+                  <span class="shrink-0 font-bold uppercase px-2.5 py-1 rounded-full <%= s.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : (s.status === 'rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800') %>"><%= s.status %></span>
                 </div>
               <% }) %>
             </div>
@@ -484,10 +482,10 @@
 
           <!-- TASKS -> MY DISPUTES -->
           <section id="sec-tasks-disputes" class="page-section anim-panel hidden space-y-5">
-            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
+            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
               <h3 class="font-bold text-sm text-[#6e59db]">Open a Dispute</h3>
               <form action="/api/disputes/create" method="POST" class="space-y-3 text-xs">
-                <div class="grid sm:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <select name="category" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2">
                     <option value="task_proof">Task Proof Dispute</option>
                     <option value="withdrawal">Withdrawal Dispute</option>
@@ -501,12 +499,12 @@
               </form>
             </div>
 
-            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-2.5 text-xs">
+            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-2.5 text-xs">
               <h3 class="font-bold text-sm">My Disputes</h3>
               <% if (disputes.length === 0) { %><p class="text-slate-500">No disputes filed.</p><% } %>
               <% disputes.forEach(d => { %>
                 <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1">
-                  <div class="flex justify-between items-center">
+                  <div class="flex flex-wrap justify-between items-center gap-1">
                     <span class="font-bold">#<%= d.id %> — <%= d.subject %> (<%= d.category %>)</span>
                     <span class="uppercase font-bold <%= d.status === 'resolved' ? 'text-emerald-600' : 'text-amber-600' %>"><%= d.status %></span>
                   </div>
@@ -517,36 +515,47 @@
             </div>
           </section>
 
-          <!-- SHORTLINKS -->
-          <section id="sec-shortlinks" class="page-section anim-panel hidden grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <% shortlinks.forEach(sl => { %>
-              <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col justify-between space-y-3 text-xs">
-                <div>
-                  <div class="flex justify-between items-center mb-1">
-                    <h3 class="font-bold text-sm"><%= sl.title %></h3>
-                    <span class="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">+<%= sl.reward_points %> pts</span>
+          <!-- SHORTLINKS (REDIRECTS BACK TO SHORTLINKS PAGE ON COMPLETION) -->
+          <section id="sec-shortlinks" class="page-section anim-panel hidden space-y-4">
+            <div class="bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 rounded-2xl p-3.5 text-xs text-slate-700 dark:text-slate-200">
+              <strong>How it works:</strong> Click <strong>Start Shortlink</strong> to open the link, finish the shortlink step, then click <strong>✓ Complete & Return to Shortlinks</strong> to claim points and return directly to this <strong>Shortlinks</strong> page.
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <% shortlinks.forEach(sl => { %>
+                <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col justify-between space-y-3 text-xs">
+                  <div>
+                    <div class="flex justify-between items-start gap-2 mb-1">
+                      <h3 class="font-bold text-sm"><%= sl.title %></h3>
+                      <span class="shrink-0 bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">+<%= sl.reward_points %> pts</span>
+                    </div>
+                    <p class="text-slate-500">Claimed today: <%= sl.claimed_today %> / <%= sl.daily_limit %> • Value: $<%= (sl.reward_points / 1000).toFixed(3) %></p>
                   </div>
-                  <p class="text-slate-500">Claimed today: <%= sl.claimed_today %> / <%= sl.daily_limit %></p>
+                  <div class="space-y-2">
+                    <button
+                      type="button"
+                      <%= sl.claimed_today >= sl.daily_limit ? 'disabled' : '' %>
+                      onclick="launchShortlink(<%= sl.id %>)"
+                      class="ui-press w-full bg-[#6e59db] hover:bg-[#5b45c9] disabled:opacity-40 text-white font-bold py-2 rounded-xl">
+                      <%= sl.claimed_today >= sl.daily_limit ? 'Daily Limit Reached' : 'Start Shortlink' %>
+                    </button>
+                    <a id="sl-complete-<%= sl.id %>" href="#" class="hidden block text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl">
+                      ✓ Complete & Return to Shortlinks
+                    </a>
+                  </div>
                 </div>
-                <div class="flex items-center gap-2">
-                  <a href="<%= sl.target_url %>" target="_blank" class="ui-press flex-1 text-center bg-slate-200 dark:bg-slate-800 font-bold py-2 rounded-xl">Open Link</a>
-                  <form action="/api/shortlinks/claim" method="POST" class="flex-1">
-                    <input type="hidden" name="shortlink_id" value="<%= sl.id %>">
-                    <button type="submit" <%= sl.claimed_today >= sl.daily_limit ? 'disabled' : '' %> class="ui-press w-full bg-[#6e59db] hover:bg-[#5b45c9] disabled:opacity-40 text-white font-bold py-2 rounded-xl">Claim</button>
-                  </form>
-                </div>
-              </div>
-            <% }) %>
+              <% }) %>
+            </div>
           </section>
 
           <!-- CLICKS -->
-          <section id="sec-clicks" class="page-section anim-panel hidden grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <section id="sec-clicks" class="page-section anim-panel hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <% ptcAds.forEach(ad => { %>
               <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
                 <div>
                   <div class="flex justify-between items-start gap-2 mb-1.5">
                     <h3 class="font-bold text-sm"><%= ad.title %></h3>
-                    <span class="bg-purple-100 text-[#6e59db] font-bold px-2.5 py-0.5 rounded-full text-xs">+<%= ad.reward_points %> pts</span>
+                    <span class="shrink-0 bg-purple-100 text-[#6e59db] font-bold px-2.5 py-0.5 rounded-full text-xs">+<%= ad.reward_points %> pts</span>
                   </div>
                   <p class="text-xs text-slate-500 mb-3"><%= ad.description || 'Wait for timer to earn.' %></p>
                 </div>
@@ -559,16 +568,16 @@
 
           <!-- SURVEYS -->
           <section id="sec-surveys" class="page-section anim-panel hidden">
-            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4">
               <p class="text-xs text-slate-500 mb-3">1,000 Points = $1.00 • Pass <code>subid=<%= user.public_id %></code> to your offerwall provider.</p>
-              <iframe src="https://fastsvr.com/list/528412?subid=<%= user.public_id %>" class="w-full h-[540px] rounded-xl border border-slate-200 dark:border-slate-800"></iframe>
+              <iframe src="https://fastsvr.com/list/528412?subid=<%= user.public_id %>" class="w-full h-[460px] sm:h-[540px] rounded-xl border border-slate-200 dark:border-slate-800"></iframe>
             </div>
           </section>
 
           <!-- ADVERTISE & CENTRAL USDT WALLET -->
-          <section id="sec-advertise" class="page-section anim-panel hidden grid lg:grid-cols-2 gap-5">
-            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
-              <h3 class="font-bold text-base text-[#6e59db]">1. Add USDT to Central Admin Wallet</h3>
+          <section id="sec-advertise" class="page-section anim-panel hidden grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+              <h3 class="font-bold text-sm sm:text-base text-[#6e59db]">1. Add USDT to Central Admin Wallet</h3>
               <p class="text-xs text-slate-600 dark:text-slate-300">All USDT balance is held in <strong>one central wallet controlled by Admin</strong>. Rate: <strong>1,000 Ad Credits = $1.00 USDT</strong>.</p>
               <form action="/api/wallet/deposit-usdt" method="POST" class="space-y-3">
                 <input type="number" step="0.01" min="0.10" name="usdt_amount" value="5.00" required class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs">
@@ -577,8 +586,8 @@
               </form>
             </div>
 
-            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
-              <h3 class="font-bold text-base">2. Create PTC Ad (Uses Ad Credits)</h3>
+            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+              <h3 class="font-bold text-sm sm:text-base">2. Create PTC Ad (Uses Ad Credits)</h3>
               <p class="text-xs text-slate-500">Ad Credits: <strong><%= user.advertiser_balance %> pts</strong> ($<%= (user.advertiser_balance / 1000).toFixed(2) %>). Requires Admin approval.</p>
               <form action="/api/advertiser/create-ptc" method="POST" class="space-y-2.5">
                 <input type="text" name="title" required placeholder="Ad Title" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs">
@@ -596,18 +605,18 @@
 
           <!-- REFERRALS -->
           <section id="sec-referrals" class="page-section anim-panel hidden">
-            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
               <h3 class="font-bold text-base">Referral System (10% Commission)</h3>
               <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs">
                 <div class="text-slate-500 mb-1">Referral Link:</div>
-                <code class="text-[#6e59db] font-bold">https://freefaucet.onrender.com/?ref=<%= user.public_id %></code>
+                <code class="text-[#6e59db] font-bold break-all">https://freefaucet.onrender.com/?ref=<%= user.public_id %></code>
                 <div class="text-slate-500 mt-1">6-Digit ID: <strong><%= user.public_id %></strong> • Referred: <strong><%= referrals.length %></strong></div>
               </div>
               <div class="text-xs space-y-1.5">
                 <% referrals.forEach(r => { %>
-                  <div class="py-1.5 border-b border-slate-200/70 dark:border-slate-800 flex justify-between">
-                    <span><%= r.email %></span>
-                    <span class="text-slate-400">ID: <%= r.public_id %></span>
+                  <div class="py-1.5 border-b border-slate-200/70 dark:border-slate-800 flex justify-between gap-2">
+                    <span class="truncate"><%= r.email %></span>
+                    <span class="shrink-0 text-slate-400">ID: <%= r.public_id %></span>
                   </div>
                 <% }) %>
               </div>
@@ -616,7 +625,7 @@
 
           <!-- WITHDRAW -->
           <section id="sec-withdraw" class="page-section anim-panel hidden max-w-lg space-y-4">
-            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
+            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
               <h3 class="font-bold text-base text-[#6e59db]">Request Withdrawal (Admin Approval Required)</h3>
               <p class="text-xs text-slate-600 dark:text-slate-300">Rate: <strong>1,000 Points = $1.00</strong> (Min 100 pts = $0.10). Withdrawals stay <strong>pending</strong> until Admin approves.</p>
               <form action="/api/withdraw/request" method="POST" class="space-y-3">
@@ -630,7 +639,7 @@
             <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2 text-xs">
               <h4 class="font-bold text-sm">My Withdrawal Requests</h4>
               <% withdrawals.forEach(w => { %>
-                <div class="p-2.5 bg-white dark:bg-slate-900 rounded-xl flex justify-between items-center">
+                <div class="p-2.5 bg-white dark:bg-slate-900 rounded-xl flex flex-wrap justify-between items-center gap-2">
                   <span>#<%= w.id %> — <strong><%= w.points_amount %> pts</strong> ($<%= Number(w.usd_amount).toFixed(2) %>)</span>
                   <span class="font-bold uppercase <%= w.status === 'approved' ? 'text-emerald-600' : (w.status === 'rejected' ? 'text-rose-600' : 'text-amber-600') %>"><%= w.status %></span>
                 </div>
@@ -640,14 +649,14 @@
 
           <!-- PROFILE -->
           <section id="sec-profile" class="page-section anim-panel hidden max-w-lg">
-            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
               <div class="flex items-center space-x-3">
-                <div class="w-12 h-12 rounded-full bg-[#7e6be6] text-white font-black flex items-center justify-center text-lg avatar-ring">
+                <div class="w-12 h-12 rounded-full bg-[#7e6be6] text-white font-black flex items-center justify-center text-lg avatar-ring shrink-0">
                   <%= user.email.charAt(0).toUpperCase() %>
                 </div>
-                <div>
-                  <h3 class="font-bold text-base"><%= user.email %></h3>
-                  <p class="text-xs text-slate-500">6-Digit User ID: <strong><%= user.public_id %></strong> • Referral: <%= user.referral_code %></p>
+                <div class="min-w-0">
+                  <h3 class="font-bold text-base truncate"><%= user.email %></h3>
+                  <p class="text-xs text-slate-500">6-Digit ID: <strong><%= user.public_id %></strong> • Ref: <%= user.referral_code %></p>
                 </div>
               </div>
               <form action="/api/profile/update" method="POST" class="space-y-3 pt-3 border-t border-slate-200 dark:border-slate-800">
@@ -663,7 +672,7 @@
 
           <!-- INBOX -->
           <section id="sec-inbox" class="page-section anim-panel hidden max-w-2xl">
-            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
+            <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
               <div class="flex justify-between items-center">
                 <h3 class="font-bold text-base">Inbox & Notifications</h3>
                 <form action="/api/notifications/read" method="POST">
@@ -674,7 +683,7 @@
               <% notifications.forEach(n => { %>
                 <div class="p-3 rounded-xl border <%= n.is_read ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800' : 'bg-purple-50 dark:bg-purple-950/50 border-purple-200 dark:border-purple-800' %> text-xs">
                   <div class="font-bold"><%= n.title %></div>
-                  <div class="text-slate-600 dark:text-slate-300 mt-0.5"><%= n.message %></div>
+                  <div class="text-slate-600 dark:text-slate-300 mt-0.5 break-words"><%= n.message %></div>
                 </div>
               <% }) %>
             </div>
@@ -682,18 +691,18 @@
 
           <!-- ADMIN PANEL -->
           <% if (isAdmin) { %>
-            <section id="sec-admin" class="page-section anim-panel hidden space-y-6">
-              <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
+            <section id="sec-admin" class="page-section anim-panel hidden space-y-5">
+              <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
                 <div class="flex flex-wrap justify-between items-center gap-2">
                   <div>
-                    <h3 class="font-bold text-base">Central Admin USDT Treasury Wallet</h3>
+                    <h3 class="font-bold text-sm sm:text-base">Central Admin USDT Treasury Wallet</h3>
                     <p class="text-xs text-slate-500">Single central USDT pool controlled by Admin (1,000 pts = $1.00).</p>
                   </div>
-                  <div class="bg-emerald-100 text-emerald-900 font-extrabold px-4 py-2 rounded-xl text-sm">
+                  <div class="bg-emerald-100 text-emerald-900 font-extrabold px-4 py-2 rounded-xl text-xs sm:text-sm">
                     Central Wallet: $<%= Number(stats.centralUsdt).toFixed(2) %> USDT
                   </div>
                 </div>
-                <form action="/api/admin/treasury/topup" method="POST" class="grid sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-200/70 dark:border-slate-800">
+                <form action="/api/admin/treasury/topup" method="POST" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 border-t border-slate-200/70 dark:border-slate-800">
                   <input type="text" name="target_email" placeholder="User email or 6-digit ID (optional)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs">
                   <input type="number" step="0.01" name="usdt_amount" required placeholder="USDT Amount ($)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs">
                   <input type="text" name="tx_ref" placeholder="TxHash / Note" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs">
@@ -701,18 +710,17 @@
                 </form>
               </div>
 
-              <!-- PENDING WITHDRAWALS -->
-              <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
-                <h3 class="font-bold text-base text-rose-600">💳 Pending Withdrawals (<%= pendingWithdrawals.length %>) — Admin Approval Required</h3>
+              <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+                <h3 class="font-bold text-sm sm:text-base text-rose-600">💳 Pending Withdrawals (<%= pendingWithdrawals.length %>) — Admin Approval Required</h3>
                 <% if (pendingWithdrawals.length === 0) { %><p class="text-xs text-slate-500">No pending withdrawals.</p><% } %>
                 <% pendingWithdrawals.forEach(w => { %>
-                  <div class="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                    <div>
-                      <div class="font-bold"><%= w.email %> (ID: <%= w.public_id %>)</div>
+                  <div class="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                    <div class="min-w-0">
+                      <div class="font-bold truncate"><%= w.email %> (ID: <%= w.public_id %>)</div>
                       <div class="text-slate-500">Amount: <strong><%= w.points_amount %> pts ($<%= Number(w.usd_amount).toFixed(2) %>)</strong> • <%= w.payout_method %></div>
-                      <div class="text-[#6e59db] font-semibold">Wallet: <%= w.wallet_address %></div>
+                      <div class="text-[#6e59db] font-semibold break-all">Wallet: <%= w.wallet_address %></div>
                     </div>
-                    <form action="/api/admin/withdrawals/review" method="POST" class="flex flex-wrap items-center gap-2">
+                    <form action="/api/admin/withdrawals/review" method="POST" class="flex flex-wrap items-center gap-2 shrink-0">
                       <input type="hidden" name="withdrawal_id" value="<%= w.id %>">
                       <input type="text" name="admin_note" placeholder="Note / TxID" class="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs w-28">
                       <button name="action" value="approve" class="ui-press bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-lg">Approve</button>
@@ -722,8 +730,7 @@
                 <% }) %>
               </div>
 
-              <!-- ADD MICRO-TASK / PTC / SHORTLINK -->
-              <div class="grid lg:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
                   <h4 class="font-bold text-sm text-[#6e59db] mb-2.5">➕ Add Micro-Task</h4>
                   <form action="/api/admin/tasks/create" method="POST" class="space-y-2 text-xs">
@@ -767,8 +774,7 @@
                 </div>
               </div>
 
-              <!-- PENDING ADS, PROOFS & DISPUTES -->
-              <div class="grid lg:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div class="ui-card bg-slate-50/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2.5 text-xs">
                   <h4 class="font-bold text-amber-600">📢 Pending Advertiser Ads (<%= pendingAds.length %>)</h4>
                   <% pendingAds.forEach(ad => { %>
@@ -824,14 +830,14 @@
       </div>
     </div>
 
-    <!-- FLOATING BOTTOM QUICK DOCK (SAMPLE INSPIRED) -->
-    <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border border-purple-200 dark:border-slate-700 shadow-2xl rounded-full px-3 py-1.5 flex items-center space-x-1 sm:space-x-2 text-xs font-bold">
-      <button onclick="showSection('home')" class="ui-press px-3 py-1.5 rounded-full hover:bg-purple-100 dark:hover:bg-slate-800 text-[#6e59db] dark:text-purple-300">Home</button>
-      <button onclick="showSection('tasks-view')" class="ui-press px-3 py-1.5 rounded-full hover:bg-purple-100 dark:hover:bg-slate-800">Tasks</button>
-      <button onclick="showSection('shortlinks')" class="ui-press px-3 py-1.5 rounded-full hover:bg-purple-100 dark:hover:bg-slate-800">Links</button>
-      <button onclick="showSection('clicks')" class="ui-press px-3 py-1.5 rounded-full hover:bg-purple-100 dark:hover:bg-slate-800">Clicks</button>
-      <button onclick="showSection('withdraw')" class="ui-press px-3 py-1.5 rounded-full hover:bg-purple-100 dark:hover:bg-slate-800">Withdraw</button>
-      <button onclick="showSection('advertise')" title="Add USDT / Advertise" class="ui-press w-8 h-8 rounded-full bg-gradient-to-r from-[#7e6be6] to-[#634ecf] text-white font-black flex items-center justify-center shadow">+</button>
+    <!-- RESPONSIVE FLOATING BOTTOM DOCK -->
+    <div class="fixed bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-40 max-w-[96vw] overflow-x-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur border border-purple-200 dark:border-slate-700 shadow-2xl rounded-full px-2 sm:px-3 py-1.5 flex items-center space-x-1 text-[11px] sm:text-xs font-bold whitespace-nowrap">
+      <button onclick="showSection('home')" class="ui-press px-2.5 sm:px-3 py-1.5 rounded-full hover:bg-purple-100 dark:hover:bg-slate-800 text-[#6e59db] dark:text-purple-300">Home</button>
+      <button onclick="showSection('tasks-view')" class="ui-press px-2.5 sm:px-3 py-1.5 rounded-full hover:bg-purple-100 dark:hover:bg-slate-800">Tasks</button>
+      <button onclick="showSection('shortlinks')" class="ui-press px-2.5 sm:px-3 py-1.5 rounded-full hover:bg-purple-100 dark:hover:bg-slate-800">Links</button>
+      <button onclick="showSection('clicks')" class="ui-press px-2.5 sm:px-3 py-1.5 rounded-full hover:bg-purple-100 dark:hover:bg-slate-800">Clicks</button>
+      <button onclick="showSection('withdraw')" class="ui-press px-2.5 sm:px-3 py-1.5 rounded-full hover:bg-purple-100 dark:hover:bg-slate-800">Withdraw</button>
+      <button onclick="showSection('advertise')" title="Add USDT / Advertise" class="ui-press w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-[#7e6be6] to-[#634ecf] text-white font-black flex items-center justify-center shadow shrink-0">+</button>
     </div>
 
     <script>
@@ -894,12 +900,16 @@
         chev.textContent = menu.classList.contains('hidden') ? '▶' : '▼';
       }
 
-      function toggleSidebar() {
-        const sb = document.getElementById('leftSidebar');
-        sb.classList.toggle('hidden');
+      function openMobileDrawer() {
+        document.getElementById('leftSidebar').classList.remove('-translate-x-full');
+        document.getElementById('mobileDrawerBackdrop').classList.remove('hidden');
       }
 
-      // Click ripple animation for .ui-press buttons
+      function closeMobileDrawer() {
+        document.getElementById('leftSidebar').classList.add('-translate-x-full');
+        document.getElementById('mobileDrawerBackdrop').classList.add('hidden');
+      }
+
       document.addEventListener('click', (e) => {
         const target = e.target.closest('.ui-press');
         if (!target) return;
@@ -911,6 +921,25 @@
         target.appendChild(ripple);
         setTimeout(() => ripple.remove(), 600);
       });
+
+      async function launchShortlink(shortlinkId) {
+        const res = await fetch('/api/shortlinks/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shortlink_id: shortlinkId })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          alert(data.error || 'Unable to start shortlink');
+          return;
+        }
+        const completeBtn = document.getElementById('sl-complete-' + shortlinkId);
+        if (completeBtn) {
+          completeBtn.href = data.callback_url;
+          completeBtn.classList.remove('hidden');
+        }
+        window.open(data.target_url, '_blank');
+      }
 
       const params = new URLSearchParams(window.location.search);
       if (params.get('tab') && document.getElementById('sec-' + params.get('tab'))) {
