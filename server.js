@@ -70,7 +70,7 @@ async function sendNotification(userId, email, title, message, allowEmail = true
         text: `Hello,\n\n${message}\n\nRate: 1,000 Points = $1.00.\n\n— Free Faucet Team`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; color: #1e293b;">
-            <h2 style="color: #1877f2; margin-top: 0;">Free Faucet</h2>
+            <h2 style="color: #6e59db; margin-top: 0;">Free Faucet</h2>
             <h3 style="margin-bottom: 8px;">${title}</h3>
             <p style="line-height: 1.5; font-size: 14px;">${message}</p>
             <p style="font-size: 12px; color: #475569;">Rate: <strong>1,000 Points = $1.00</strong>.</p>
@@ -118,7 +118,7 @@ async function getCachedStats() {
   return cachedStats;
 }
 
-app.get('/health', (req, res) => res.status(200).send('OK - Free Faucet v3 Active'));
+app.get('/health', (req, res) => res.status(200).send('OK - Free Faucet v3.1 Active'));
 
 app.get('/', async (req, res) => {
   const refParam = (req.query.ref || '').trim();
@@ -282,7 +282,7 @@ app.get('/', async (req, res) => {
   });
 });
 
-// Signup (Generates Unique 6-Character Numeric ID)
+// Signup (Unique 6-Character Numeric ID)
 app.post('/auth/signup', async (req, res) => {
   const { email, password, faucetpay_address, ref_code } = req.body;
   const ip = req.headers['cf-connecting-ip'] || req.ip;
@@ -466,37 +466,92 @@ app.post('/api/wallet/deposit-usdt', async (req, res) => {
   }
 });
 
-// Claim Shortlink Reward
-app.post('/api/shortlinks/claim', async (req, res) => {
-  if (!req.session.userId) return res.redirect('/');
+// Start Shortlink & Issue Signed Completion URL
+app.post('/api/shortlinks/start', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Login required' });
   const linkId = parseInt(req.body.shortlink_id, 10);
-  const client = await pool.connect();
+  const lRes = await pool.query('SELECT * FROM shortlinks WHERE id = $1', [linkId]);
+  if (lRes.rows.length === 0) return res.status(404).json({ error: 'Shortlink not found' });
 
+  const link = lRes.rows[0];
+  const cntRes = await pool.query(
+    "SELECT COUNT(*)::int AS cnt FROM shortlink_claims WHERE user_id = $1 AND shortlink_id = $2 AND claimed_at > NOW() - INTERVAL '24 HOURS'",
+    [req.session.userId, linkId]
+  );
+  if (cntRes.rows[0].cnt >= link.daily_limit) {
+    return res.status(400).json({ error: 'Daily limit reached for this shortlink' });
+  }
+
+  const expiresAt = Date.now() + 15 * 60 * 1000;
+  const secret = process.env.SESSION_SECRET || 'freefaucet-secret-2026';
+  const payload = `${req.session.userId}:${linkId}:${expiresAt}`;
+  const sig = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+  const token = Buffer.from(`${payload}:${sig}`).toString('base64url');
+
+  const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  const callbackUrl = `${proto}://${req.get('host')}/api/shortlinks/complete?token=${token}`;
+
+  res.json({
+    ok: true,
+    target_url: link.target_url,
+    callback_url: callbackUrl
+  });
+});
+
+// Complete Shortlink & Redirect Back to Shortlinks Page (/?tab=shortlinks)
+app.get('/api/shortlinks/complete', async (req, res) => {
+  const token = String(req.query.token || '').trim();
+  const secret = process.env.SESSION_SECRET || 'freefaucet-secret-2026';
+
+  let userId, linkId, expiresAt, sig;
+  try {
+    const decoded = Buffer.from(token, 'base64url').toString('utf8');
+    const parts = decoded.split(':');
+    if (parts.length !== 4) throw new Error('Malformed token');
+    userId = parseInt(parts[0], 10);
+    linkId = parseInt(parts[1], 10);
+    expiresAt = parseInt(parts[2], 10);
+    sig = parts[3];
+
+    const expectedSig = crypto.createHmac('sha256', secret).update(`${userId}:${linkId}:${expiresAt}`).digest('hex');
+    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+      return res.redirect('/?tab=shortlinks&msg=' + encodeURIComponent('Invalid shortlink completion token.'));
+    }
+    if (Date.now() > expiresAt) {
+      return res.redirect('/?tab=shortlinks&msg=' + encodeURIComponent('Shortlink session expired. Please start again.'));
+    }
+  } catch (e) {
+    return res.redirect('/?tab=shortlinks&msg=' + encodeURIComponent('Invalid shortlink completion link.'));
+  }
+
+  const client = await pool.connect();
   try {
     await client.query('BEGIN');
     const lRes = await client.query('SELECT * FROM shortlinks WHERE id = $1 FOR UPDATE', [linkId]);
     if (lRes.rows.length === 0) {
       await client.query('ROLLBACK');
-      return res.redirect('/?tab=shortlinks&msg=' + encodeURIComponent('Shortlink not found.'));
+      return res.redirect('/?tab=shortlinks&msg=' + encodeURIComponent('Shortlink no longer exists.'));
     }
     const link = lRes.rows[0];
+
     const cntRes = await client.query(
       "SELECT COUNT(*)::int AS cnt FROM shortlink_claims WHERE user_id = $1 AND shortlink_id = $2 AND claimed_at > NOW() - INTERVAL '24 HOURS'",
-      [req.session.userId, linkId]
+      [userId, linkId]
     );
     if (cntRes.rows[0].cnt >= link.daily_limit) {
       await client.query('ROLLBACK');
-      return res.redirect('/?tab=shortlinks&msg=' + encodeURIComponent('Daily limit reached for this shortlink.'));
+      return res.redirect('/?tab=shortlinks&msg=' + encodeURIComponent('Daily limit already reached for this shortlink.'));
     }
 
-    await client.query('INSERT INTO shortlink_claims (user_id, shortlink_id) VALUES ($1, $2)', [req.session.userId, linkId]);
-    await awardPointsWithReferral(client, req.session.userId, link.reward_points);
+    await client.query('INSERT INTO shortlink_claims (user_id, shortlink_id) VALUES ($1, $2)', [userId, linkId]);
+    await awardPointsWithReferral(client, userId, link.reward_points);
     await client.query('COMMIT');
 
-    res.redirect('/?tab=shortlinks&msg=' + encodeURIComponent(`Claimed +${link.reward_points} pts ($${(link.reward_points / 1000).toFixed(3)}) from shortlink!`));
+    return res.redirect('/?tab=shortlinks&msg=' + encodeURIComponent(`Shortlink completed! +${link.reward_points} pts ($${(link.reward_points / 1000).toFixed(3)}) credited.`));
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).send('Shortlink claim error');
+    console.error(err);
+    return res.redirect('/?tab=shortlinks&msg=' + encodeURIComponent('Could not credit shortlink right now.'));
   } finally {
     client.release();
   }
@@ -1008,4 +1063,4 @@ app.get('/api/postback/:network', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Free Faucet v3 running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Free Faucet v3.1 running on port ${PORT}`));
