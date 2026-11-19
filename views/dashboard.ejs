@@ -3,244 +3,544 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TimeWall Micro-Task & Offerwall Hub</title>
+  <title>TimeWall — Task & Offerwall Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
 
-  <!-- Top Navigation -->
-  <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <span class="bg-emerald-500 text-slate-950 font-extrabold px-2.5 py-1 rounded text-lg">TW</span>
-        <h1 class="text-xl font-bold tracking-wide">TimeWall <span class="text-emerald-400 text-sm font-normal">Earn & Advertise</span></h1>
-      </div>
-      <% if (user) { %>
-        <div class="flex items-center space-x-4">
-          <div class="bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 text-sm">
-            Balance: <span id="userBalance" class="text-emerald-400 font-bold"><%= user.points_balance %></span> pts
-            <span class="text-xs text-slate-400">($<%= (user.points_balance / 10000).toFixed(3) %>)</span>
-          </div>
-          <div class="bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 text-sm hidden sm:block">
-            Ad Credits: <span class="text-amber-400 font-bold"><%= user.advertiser_balance %></span> pts
-          </div>
-          <a href="/logout" class="text-xs bg-rose-600 hover:bg-rose-500 px-3 py-2 rounded font-semibold">Logout</a>
+  <% if (!user) { %>
+    <div class="min-h-screen flex items-center justify-center p-4">
+      <div class="w-full max-w-md bg-slate-900 p-7 rounded-2xl border border-slate-800 shadow-2xl">
+        <div class="flex items-center justify-center space-x-2 mb-3">
+          <span class="bg-emerald-500 text-slate-950 font-black px-3 py-1 rounded-lg text-xl">TW</span>
+          <h1 class="text-2xl font-bold">TimeWall</h1>
         </div>
-      <% } %>
-    </div>
-  </header>
-
-  <main class="max-w-6xl mx-auto px-4 py-8">
-    <% if (!user) { %>
-      <!-- Login / Register Card -->
-      <div class="max-w-md mx-auto bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg mt-10">
-        <h2 class="text-2xl font-bold mb-2 text-center text-emerald-400">Start Earning Crypto</h2>
-        <p class="text-slate-400 text-sm text-center mb-6">Complete surveys, micro-tasks, and PTC clicks for instant FaucetPay USDT payouts.</p>
+        <p class="text-slate-400 text-sm text-center mb-6">1,000 Points = $1.00 • Complete PTC ads, micro-tasks & surveys.</p>
         <form action="/auth" method="POST" class="space-y-4">
           <div>
             <label class="block text-xs uppercase text-slate-400 mb-1">Email Address</label>
-            <input type="email" name="email" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none">
+            <input type="email" name="email" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-sm focus:border-emerald-500 focus:outline-none">
           </div>
           <div>
             <label class="block text-xs uppercase text-slate-400 mb-1">Password</label>
-            <input type="password" name="password" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none">
+            <input type="password" name="password" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-sm focus:border-emerald-500 focus:outline-none">
           </div>
           <div>
-            <label class="block text-xs uppercase text-slate-400 mb-1">FaucetPay Email / USDT Address (Optional)</label>
-            <input type="text" name="faucetpay_address" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none">
+            <label class="block text-xs uppercase text-slate-400 mb-1">FaucetPay Email / USDT Address</label>
+            <input type="text" name="faucetpay_address" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-sm focus:border-emerald-500 focus:outline-none">
           </div>
-          <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-lg transition">Login / Create Instant Account</button>
+          <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-lg transition">Login / Register</button>
         </form>
       </div>
-    <% } else { %>
+    </div>
+  <% } else { %>
+    <% const initialLetter = (user.email || 'U').charAt(0).toUpperCase(); %>
 
-      <!-- Active PTC Timer Bar (Appears when user clicks a PTC Ad) -->
-      <div id="ptcTimerBox" class="hidden mb-6 bg-amber-500/10 border border-amber-500 text-amber-300 p-4 rounded-xl flex items-center justify-between">
+    <div class="flex min-h-screen">
+      <!-- Mobile Overlay -->
+      <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-30 hidden lg:hidden"></div>
+
+      <!-- LEFT SIDEBAR NAVIGATION -->
+      <aside id="leftSidebar" class="fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between transform -translate-x-full lg:translate-x-0 transition-transform duration-200">
         <div>
-          <span class="font-bold">PTC Timer Running:</span> Keep the advertiser tab open! Remaining: <span id="ptcCountdown" class="font-extrabold text-xl">15</span>s
-        </div>
-        <button id="ptcClaimBtn" onclick="claimPtcReward()" class="hidden bg-emerald-500 text-slate-950 font-bold px-4 py-1.5 rounded-lg">Claim Points</button>
-      </div>
+          <!-- Brand Logo -->
+          <div class="h-16 px-4 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <span class="bg-emerald-500 text-slate-950 font-black px-2.5 py-1 rounded-lg text-base">TW</span>
+              <span class="font-bold text-lg tracking-tight">TimeWall</span>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-slate-400 hover:text-white text-sm px-2 py-1">✕</button>
+          </div>
 
-      <!-- Navigation Tabs -->
-      <div class="flex flex-wrap gap-2 mb-6 border-b border-slate-700 pb-3">
-        <button onclick="showTab('ptc')" class="tab-btn bg-emerald-500 text-slate-950 font-bold px-4 py-2 rounded-lg text-sm">1. PTC Clicks (<%= ptcAds.length %>)</button>
-        <button onclick="showTab('tasks')" class="tab-btn bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm font-semibold">2. Micro-Tasks (<%= microTasks.length %>)</button>
-        <button onclick="showTab('offerwalls')" class="tab-btn bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm font-semibold">3. Survey Offerwalls</button>
-        <button onclick="showTab('advertise')" class="tab-btn bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm font-semibold">4. Advertise & Review Proofs</button>
-        <button onclick="showTab('withdraw')" class="tab-btn bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm font-semibold">5. Instant Withdraw</button>
-      </div>
-
-      <!-- TAB 1: PTC ADS -->
-      <div id="tab-ptc" class="tab-content grid md:grid-cols-2 gap-4">
-        <% if (ptcAds.length === 0) { %>
-          <div class="col-span-2 bg-slate-800 p-6 rounded-xl text-center text-slate-400">You have clicked all available PTC ads for today! Check back soon.</div>
-        <% } %>
-        <% ptcAds.forEach(ad => { %>
-          <div id="ad-card-<%= ad.id %>" class="bg-slate-800 border border-slate-700 p-5 rounded-xl flex flex-col justify-between">
-            <div>
-              <div class="flex justify-between items-start mb-2">
-                <h3 class="font-bold text-lg text-white"><%= ad.title %></h3>
-                <span class="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded">+<%= ad.reward_points %> pts</span>
+          <!-- User Profile Logo Card -->
+          <div class="p-4 border-b border-slate-800/80">
+            <button onclick="showSection('profile')" class="w-full flex items-center space-x-3 text-left bg-slate-950/70 hover:bg-slate-800/80 p-2.5 rounded-xl border border-slate-800 transition">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 text-slate-950 font-extrabold flex items-center justify-center text-base shrink-0">
+                <%= initialLetter %>
               </div>
-              <p class="text-slate-400 text-sm mb-4"><%= ad.description || 'Visit advertiser website and wait for the timer to finish.' %></p>
-            </div>
-            <div class="flex items-center justify-between border-t border-slate-700 pt-3">
-              <span class="text-xs text-slate-400">Timer: <%= ad.timer_seconds %> seconds</span>
-              <button onclick="startPtc(<%= ad.id %>, '<%= ad.url %>', <%= ad.timer_seconds %>)" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-1.5 rounded-lg text-sm">View Ad</button>
-            </div>
+              <div class="min-w-0 flex-1">
+                <div class="text-sm font-semibold text-white truncate"><%= user.email %></div>
+                <div class="text-[11px] text-emerald-400 font-medium">
+                  <%= isAdmin ? 'Administrator' : 'Member Account' %>
+                </div>
+              </div>
+            </button>
           </div>
-        <% }) %>
-      </div>
 
-      <!-- TAB 2: MICRO-TASKS -->
-      <div id="tab-tasks" class="tab-content hidden space-y-4">
-        <% microTasks.forEach(task => { %>
-          <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl">
-            <div class="flex justify-between items-center mb-2">
-              <h3 class="font-bold text-lg text-emerald-400"><%= task.title %></h3>
-              <span class="bg-emerald-500 text-slate-950 font-extrabold px-3 py-1 rounded text-sm">+<%= task.reward_points %> Points</span>
-            </div>
-            <p class="text-sm text-slate-300 whitespace-pre-line mb-3"><%= task.instructions %></p>
-            <p class="text-xs text-amber-400 mb-4">Required Proof: <%= task.proof_required %></p>
-            <form action="/api/tasks/submit" method="POST" class="grid sm:grid-cols-3 gap-3 bg-slate-900 p-3 rounded-lg">
-              <input type="hidden" name="task_id" value="<%= task.id %>">
-              <input type="text" name="proof_text" required placeholder="Enter username / proof text..." class="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm">
-              <input type="url" name="screenshot_url" placeholder="Screenshot link (ImgBB / Lightshot)" class="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm">
-              <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded py-2 text-sm">Submit Proof</button>
-            </form>
-          </div>
-        <% }) %>
-      </div>
+          <!-- Navigation Links -->
+          <nav class="p-3 space-y-1 text-sm">
+            <button onclick="showSection('home')" data-nav="home" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold">
+              <span>🏠 Home</span>
+            </button>
+            <button onclick="showSection('ptc')" data-nav="ptc" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 font-medium">
+              <span>🖱️ PTC Clicks</span>
+              <span class="text-xs bg-slate-800 text-emerald-400 px-2 py-0.5 rounded-full"><%= ptcAds.length %></span>
+            </button>
+            <button onclick="showSection('tasks')" data-nav="tasks" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 font-medium">
+              <span>✅ Micro-Tasks</span>
+              <span class="text-xs bg-slate-800 text-emerald-400 px-2 py-0.5 rounded-full"><%= microTasks.length %></span>
+            </button>
+            <button onclick="showSection('offerwalls')" data-nav="offerwalls" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 font-medium">
+              <span>📋 Survey Offerwalls</span>
+            </button>
+            <button onclick="showSection('advertise')" data-nav="advertise" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 font-medium">
+              <span>📢 Advertise</span>
+            </button>
+            <button onclick="showSection('withdraw')" data-nav="withdraw" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 font-medium">
+              <span>💸 Withdraw</span>
+            </button>
 
-      <!-- TAB 3: EMBEDDED SURVEY OFFERWALLS -->
-      <div id="tab-offerwalls" class="tab-content hidden">
-        <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl">
-          <h3 class="font-bold text-lg mb-2">External Survey & Offer Partners</h3>
-          <p class="text-xs text-slate-400 mb-4">Replace the demo URL below with your approved Monlix, CPAlead, or BitLabs iFrame URL using <code>subid=<%= user.id %></code>.</p>
-          <iframe src="https://fastsvr.com/list/528412?subid=<%= user.id %>" class="w-full h-[550px] rounded-lg border border-slate-700 bg-slate-950"></iframe>
-        </div>
-      </div>
-
-      <!-- TAB 4: ADVERTISER PORTAL & PROOF APPROVAL -->
-      <div id="tab-advertise" class="tab-content hidden grid md:grid-cols-2 gap-6">
-        <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl">
-          <h3 class="font-bold text-lg mb-4 text-amber-400">Create New PTC Ad Campaign</h3>
-          <form action="/api/advertiser/create-ptc" method="POST" class="space-y-3">
-            <input type="text" name="title" required placeholder="Ad Headline" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
-            <input type="url" name="url" required placeholder="Target Website URL (https://...)" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
-            <div class="grid grid-cols-3 gap-2">
-              <input type="number" name="timer_seconds" value="15" min="5" class="bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm" placeholder="Seconds">
-              <input type="number" name="reward_points" value="20" min="5" class="bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm" placeholder="Pts/View">
-              <input type="number" name="total_views" value="25" min="5" class="bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm" placeholder="Total Views">
-            </div>
-            <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 rounded text-sm">Launch Instant PTC Ad</button>
-          </form>
+            <% if (isAdmin) { %>
+              <div class="pt-3 mt-3 border-t border-slate-800">
+                <div class="px-3.5 pb-1 text-[11px] uppercase tracking-wider text-amber-400 font-bold">Management</div>
+                <button onclick="showSection('admin')" data-nav="admin" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-amber-300 hover:bg-amber-500/10 border border-amber-500/20 font-semibold">
+                  <span>🛡️ Admin Panel</span>
+                  <span class="text-xs bg-amber-500 text-slate-950 font-bold px-2 py-0.5 rounded-full">
+                    <%= stats.pendingProofs + stats.pendingAds %>
+                  </span>
+                </button>
+              </div>
+            <% } %>
+          </nav>
         </div>
 
-        <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl">
-          <h3 class="font-bold text-lg mb-4 text-emerald-400">Pending Micro-Task Proofs (<%= pendingAdmin.length %>)</h3>
-          <div class="space-y-3 max-h-80 overflow-y-auto">
-            <% pendingAdmin.forEach(item => { %>
-              <div class="bg-slate-900 p-3 rounded border border-slate-700 text-xs">
-                <div class="font-bold text-white"><%= item.title %> (+<%= item.reward_points %> pts)</div>
-                <div class="text-slate-400 my-1">User: <%= item.email %> | Proof: <span class="text-amber-300"><%= item.proof_text %></span></div>
-                <form action="/api/tasks/review" method="POST" class="flex gap-2 mt-2">
-                  <input type="hidden" name="submission_id" value="<%= item.id %>">
-                  <button name="action" value="approve" class="bg-emerald-600 px-3 py-1 rounded text-white font-bold">Approve</button>
-                  <button name="action" value="reject" class="bg-rose-600 px-3 py-1 rounded text-white font-bold">Reject</button>
+        <!-- Sidebar Footer -->
+        <div class="p-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span>Rate: 1,000 pts = $1.00</span>
+          <a href="/logout" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold px-3 py-1.5 rounded-lg">Logout</a>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT AREA -->
+      <div class="flex-1 flex flex-col min-w-0">
+        <!-- Top Bar -->
+        <header class="h-16 bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20">
+          <div class="flex items-center space-x-3">
+            <button onclick="toggleSidebar()" class="lg:hidden bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-sm font-bold">☰ Menu</button>
+            <h2 id="pageTitle" class="text-lg font-bold text-white">Home Overview</h2>
+          </div>
+          <div class="flex items-center space-x-2 sm:space-x-3">
+            <div class="bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl text-xs sm:text-sm">
+              Balance: <span class="text-emerald-400 font-bold"><%= user.points_balance %></span> pts
+              <span class="text-slate-400">($<%= (user.points_balance / 1000).toFixed(2) %>)</span>
+            </div>
+            <div class="hidden sm:block bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl text-sm">
+              Ad Credits: <span class="text-amber-400 font-bold"><%= user.advertiser_balance %></span> pts
+              <span class="text-slate-400">($<%= (user.advertiser_balance / 1000).toFixed(2) %>)</span>
+            </div>
+          </div>
+        </header>
+
+        <main class="p-4 sm:p-6 max-w-6xl w-full mx-auto space-y-6">
+          <!-- Active PTC Timer Bar -->
+          <div id="ptcTimerBox" class="hidden bg-amber-500/10 border border-amber-500 text-amber-300 p-4 rounded-xl flex items-center justify-between">
+            <div>
+              <span class="font-bold">PTC Timer Active:</span> Keep advertiser site open — <span id="ptcCountdown" class="font-extrabold text-xl">15</span>s left
+            </div>
+            <button id="ptcClaimBtn" onclick="claimPtcReward()" class="hidden bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-1.5 rounded-lg">Claim Reward</button>
+          </div>
+
+          <!-- SECTION: HOME -->
+          <section id="sec-home" class="page-section space-y-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <div class="text-xs text-slate-400">Available Balance</div>
+                <div class="text-2xl font-extrabold text-emerald-400 mt-1">$<%= (user.points_balance / 1000).toFixed(2) %></div>
+                <div class="text-xs text-slate-500"><%= user.points_balance %> pts (1,000 pts = $1)</div>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <div class="text-xs text-slate-400">PTC Ads Ready</div>
+                <div class="text-2xl font-extrabold text-white mt-1"><%= stats.activePtc %></div>
+                <div class="text-xs text-slate-500">Instant credit on timer</div>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <div class="text-xs text-slate-400">Micro-Tasks Open</div>
+                <div class="text-2xl font-extrabold text-white mt-1"><%= stats.activeTasks %></div>
+                <div class="text-xs text-slate-500">Proof reviewed in Admin</div>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <div class="text-xs text-slate-400">Pending Reviews</div>
+                <div class="text-2xl font-extrabold text-amber-400 mt-1"><%= stats.pendingProofs + stats.pendingAds %></div>
+                <div class="text-xs text-slate-500"><%= stats.pendingProofs %> proofs • <%= stats.pendingAds %> ads</div>
+              </div>
+            </div>
+
+            <!-- My Task Submissions History -->
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+              <h3 class="font-bold text-base mb-3">Recent Micro-Task Submissions</h3>
+              <% if (submissions.length === 0) { %>
+                <p class="text-sm text-slate-400">No task submissions yet. Open <strong>Micro-Tasks</strong> in the left menu to complete tasks.</p>
+              <% } else { %>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-sm text-left">
+                    <thead class="text-xs uppercase text-slate-400 border-b border-slate-800">
+                      <tr>
+                        <th class="py-2 pr-4">Task</th>
+                        <th class="py-2 pr-4">Proof</th>
+                        <th class="py-2 pr-4">Reward</th>
+                        <th class="py-2">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/70">
+                      <% submissions.forEach(s => { %>
+                        <tr>
+                          <td class="py-2.5 pr-4 font-medium"><%= s.title %></td>
+                          <td class="py-2.5 pr-4 text-slate-400 max-w-xs truncate"><%= s.proof_text %></td>
+                          <td class="py-2.5 pr-4 text-emerald-400 font-semibold"><%= s.reward_points %> pts ($<%= (s.reward_points / 1000).toFixed(2) %>)</td>
+                          <td class="py-2.5">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold <%= s.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : (s.status === 'rejected' ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400') %>">
+                              <%= s.status %>
+                            </span>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              <% } %>
+            </div>
+          </section>
+
+          <!-- SECTION: PTC CLICKS -->
+          <section id="sec-ptc" class="page-section hidden grid md:grid-cols-2 gap-4">
+            <% if (ptcAds.length === 0) { %>
+              <div class="col-span-2 bg-slate-900 border border-slate-800 p-6 rounded-xl text-center text-slate-400">No approved PTC ads available right now.</div>
+            <% } %>
+            <% ptcAds.forEach(ad => { %>
+              <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl flex flex-col justify-between">
+                <div>
+                  <div class="flex justify-between items-start gap-2 mb-2">
+                    <h3 class="font-bold text-lg text-white"><%= ad.title %></h3>
+                    <span class="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded shrink-0">
+                      +<%= ad.reward_points %> pts ($<%= (ad.reward_points / 1000).toFixed(3) %>)
+                    </span>
+                  </div>
+                  <p class="text-slate-400 text-sm mb-4"><%= ad.description || 'Stay on the advertiser site until the timer finishes.' %></p>
+                </div>
+                <div class="flex items-center justify-between border-t border-slate-800 pt-3">
+                  <span class="text-xs text-slate-400">Timer: <%= ad.timer_seconds %>s • Views left: <%= ad.remaining_views %></span>
+                  <button onclick="startPtc(<%= ad.id %>, '<%= ad.url %>', <%= ad.timer_seconds %>)" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-1.5 rounded-lg text-sm">View Ad</button>
+                </div>
+              </div>
+            <% }) %>
+          </section>
+
+          <!-- SECTION: MICRO-TASKS -->
+          <section id="sec-tasks" class="page-section hidden space-y-4">
+            <% if (microTasks.length === 0) { %>
+              <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl text-center text-slate-400">No micro-tasks available right now. Admins can add new tasks inside the <strong>Admin Panel</strong>.</div>
+            <% } %>
+            <% microTasks.forEach(task => { %>
+              <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+                <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+                  <h3 class="font-bold text-lg text-emerald-400"><%= task.title %></h3>
+                  <span class="bg-emerald-500 text-slate-950 font-extrabold px-3 py-1 rounded-lg text-sm">
+                    +<%= task.reward_points %> pts ($<%= (task.reward_points / 1000).toFixed(2) %>)
+                  </span>
+                </div>
+                <p class="text-sm text-slate-300 whitespace-pre-line mb-3"><%= task.instructions %></p>
+                <p class="text-xs text-amber-400 mb-4">Required Proof: <%= task.proof_required %> • Slots left: <%= task.remaining_slots %></p>
+                <form action="/api/tasks/submit" method="POST" class="grid sm:grid-cols-3 gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                  <input type="hidden" name="task_id" value="<%= task.id %>">
+                  <input type="text" name="proof_text" required placeholder="Enter proof / username..." class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                  <input type="url" name="screenshot_url" placeholder="Screenshot link (optional)" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                  <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg py-2 text-sm">Submit Proof</button>
                 </form>
               </div>
             <% }) %>
-          </div>
-        </div>
+          </section>
+
+          <!-- SECTION: OFFERWALLS -->
+          <section id="sec-offerwalls" class="page-section hidden">
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+              <h3 class="font-bold text-lg mb-1">External Survey & Offer Partners</h3>
+              <p class="text-xs text-slate-400 mb-4">Postback rate: 1,000 pts = $1.00 (70% user share = 700 pts per $1.00). Pass <code>subid=<%= user.id %></code> in your offerwall URL.</p>
+              <iframe src="https://fastsvr.com/list/528412?subid=<%= user.id %>" class="w-full h-[560px] rounded-xl border border-slate-800 bg-slate-950"></iframe>
+            </div>
+          </section>
+
+          <!-- SECTION: ADVERTISE -->
+          <section id="sec-advertise" class="page-section hidden max-w-2xl">
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl">
+              <h3 class="font-bold text-lg mb-1 text-amber-400">Submit PTC Ad Campaign (Admin Reviewed)</h3>
+              <p class="text-xs text-slate-400 mb-4">1,000 Ad Credits = $1.00. Campaigns are held for Admin approval before going live; if rejected, credits are refunded automatically.</p>
+              <form action="/api/advertiser/create-ptc" method="POST" class="space-y-3">
+                <input type="text" name="title" required placeholder="Ad Title" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                <input type="text" name="description" placeholder="Short description (optional)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                <input type="url" name="url" required placeholder="https://example.com" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                <div class="grid grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Timer (sec)</label>
+                    <input type="number" name="timer_seconds" value="15" min="5" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Reward (pts)</label>
+                    <input type="number" name="reward_points" value="10" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Views</label>
+                    <input type="number" name="total_views" value="20" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                  </div>
+                </div>
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-lg text-sm">Submit Campaign for Approval</button>
+              </form>
+            </div>
+          </section>
+
+          <!-- SECTION: WITHDRAW -->
+          <section id="sec-withdraw" class="page-section hidden max-w-md">
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl">
+              <h3 class="font-bold text-xl mb-1 text-emerald-400">Instant FaucetPay Payout</h3>
+              <p class="text-xs text-slate-400 mb-4">Exchange rate: <strong>1,000 Points = $1.00 USDT</strong>. Minimum withdrawal: <strong>100 Points ($0.10 USDT)</strong>.</p>
+              <div class="space-y-3">
+                <input type="text" id="fpAddress" value="<%= user.faucetpay_address || '' %>" placeholder="FaucetPay Email or USDT Address" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                <input type="number" id="withdrawPts" value="1000" min="100" step="1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                <button onclick="withdrawFunds()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-lg text-sm">Withdraw Instantly</button>
+                <p id="withdrawMsg" class="text-xs text-center mt-2"></p>
+              </div>
+            </div>
+          </section>
+
+          <!-- SECTION: PROFILE -->
+          <section id="sec-profile" class="page-section hidden max-w-lg">
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl space-y-4">
+              <div class="flex items-center space-x-4">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 text-slate-950 font-black flex items-center justify-center text-2xl">
+                  <%= initialLetter %>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg"><%= user.email %></h3>
+                  <p class="text-xs text-slate-400">User ID: #<%= user.id %> • Role: <%= isAdmin ? 'Admin' : 'User' %></p>
+                </div>
+              </div>
+              <form action="/api/profile/update" method="POST" class="space-y-3 pt-2 border-t border-slate-800">
+                <label class="block text-xs text-slate-400">Saved FaucetPay Address / Email</label>
+                <input type="text" name="faucetpay_address" value="<%= user.faucetpay_address || '' %>" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2 rounded-lg text-sm">Save Profile</button>
+              </form>
+            </div>
+          </section>
+
+          <!-- SECTION: ADMIN PANEL -->
+          <% if (isAdmin) { %>
+            <section id="sec-admin" class="page-section hidden space-y-6">
+              <!-- Create Task & Create PTC Forms -->
+              <div class="grid lg:grid-cols-2 gap-6">
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+                  <h3 class="font-bold text-base text-emerald-400 mb-3">➕ Add New Micro-Task</h3>
+                  <form action="/api/admin/tasks/create" method="POST" class="space-y-3">
+                    <input type="text" name="title" required placeholder="Task Title (e.g., Follow X Account & Retweet)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                    <textarea name="instructions" rows="3" required placeholder="Step-by-step instructions for users..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm"></textarea>
+                    <input type="text" name="proof_required" required placeholder="Proof required (e.g., Your @username)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                    <div class="grid grid-cols-2 gap-3">
+                      <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Reward (1,000 pts = $1)</label>
+                        <input type="number" name="reward_points" value="100" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                      </div>
+                      <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Total Slots</label>
+                        <input type="number" name="total_slots" value="50" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                      </div>
+                    </div>
+                    <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2 rounded-lg text-sm">Publish Micro-Task</button>
+                  </form>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+                  <h3 class="font-bold text-base text-sky-400 mb-3">➕ Add Instant PTC Ad</h3>
+                  <form action="/api/admin/ptc/create" method="POST" class="space-y-3">
+                    <input type="text" name="title" required placeholder="PTC Ad Headline" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                    <input type="text" name="description" placeholder="Description" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                    <input type="url" name="url" required placeholder="https://target-url.com" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                    <div class="grid grid-cols-3 gap-2">
+                      <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Timer (s)</label>
+                        <input type="number" name="timer_seconds" value="15" min="5" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                      </div>
+                      <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Points</label>
+                        <input type="number" name="reward_points" value="10" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                      </div>
+                      <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Views</label>
+                        <input type="number" name="total_views" value="100" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                      </div>
+                    </div>
+                    <button type="submit" class="w-full bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold py-2 rounded-lg text-sm">Publish PTC Ad</button>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Approve / Reject Pending Advertiser Ads -->
+              <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+                <h3 class="font-bold text-base text-amber-400 mb-3">📢 Pending Advertiser Ads (<%= pendingAds.length %>)</h3>
+                <% if (pendingAds.length === 0) { %>
+                  <p class="text-sm text-slate-400">No pending advertiser campaigns waiting for approval.</p>
+                <% } else { %>
+                  <div class="space-y-3">
+                    <% pendingAds.forEach(ad => { %>
+                      <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="text-sm">
+                          <div class="font-bold text-white"><%= ad.title %> <span class="text-xs text-slate-400 font-normal">by <%= ad.advertiser_email || 'Advertiser' %></span></div>
+                          <div class="text-xs text-sky-400 truncate max-w-md"><%= ad.url %></div>
+                          <div class="text-xs text-slate-400 mt-1">
+                            Timer: <%= ad.timer_seconds %>s • Reward: <%= ad.reward_points %> pts • Views: <%= ad.remaining_views %> • Cost: <%= ad.total_cost %> pts ($<%= ((ad.total_cost || 0) / 1000).toFixed(2) %>)
+                          </div>
+                        </div>
+                        <form action="/api/admin/ads/review" method="POST" class="flex items-center space-x-2 shrink-0">
+                          <input type="hidden" name="ad_id" value="<%= ad.id %>">
+                          <button name="action" value="approve" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg">Approve</button>
+                          <button name="action" value="reject" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg">Reject & Refund</button>
+                        </form>
+                      </div>
+                    <% }) %>
+                  </div>
+                <% } %>
+              </div>
+
+              <!-- Approve / Reject User Task Proofs -->
+              <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+                <h3 class="font-bold text-base text-emerald-400 mb-3">✅ Pending User Task Proofs (<%= pendingProofs.length %>)</h3>
+                <% if (pendingProofs.length === 0) { %>
+                  <p class="text-sm text-slate-400">No pending user task proofs to review.</p>
+                <% } else { %>
+                  <div class="space-y-3">
+                    <% pendingProofs.forEach(p => { %>
+                      <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="text-sm">
+                          <div class="font-bold text-white"><%= p.title %> <span class="text-emerald-400">(+<%= p.reward_points %> pts / $<%= (p.reward_points / 1000).toFixed(2) %>)</span></div>
+                          <div class="text-xs text-slate-400">User: <%= p.email %></div>
+                          <div class="text-xs text-amber-300 mt-1">Proof: <%= p.proof_text %></div>
+                          <% if (p.screenshot_url) { %>
+                            <a href="<%= p.screenshot_url %>" target="_blank" class="text-xs text-sky-400 underline mt-1 inline-block">View Screenshot</a>
+                          <% } %>
+                        </div>
+                        <form action="/api/admin/proofs/review" method="POST" class="flex items-center space-x-2 shrink-0">
+                          <input type="hidden" name="submission_id" value="<%= p.id %>">
+                          <button name="action" value="approve" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg">Approve & Pay</button>
+                          <button name="action" value="reject" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg">Reject</button>
+                        </form>
+                      </div>
+                    <% }) %>
+                  </div>
+                <% } %>
+              </div>
+            </section>
+          <% } %>
+        </main>
       </div>
+    </div>
 
-      <!-- TAB 5: INSTANT WITHDRAWAL -->
-      <div id="tab-withdraw" class="tab-content hidden max-w-md mx-auto">
-        <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl">
-          <h3 class="font-bold text-xl mb-2 text-emerald-400">Instant FaucetPay Payout</h3>
-          <p class="text-xs text-slate-400 mb-4">10,000 Points = $1.00 USDT. Minimum payout: 1,000 Points ($0.10 USDT).</p>
-          <div class="space-y-3">
-            <input type="text" id="fpAddress" value="<%= user.faucetpay_address %>" placeholder="FaucetPay Email or USDT Address" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
-            <input type="number" id="withdrawPts" value="1000" min="1000" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
-            <button onclick="withdrawFunds()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-lg text-sm">Withdraw Instantly</button>
-            <p id="withdrawMsg" class="text-xs text-center mt-2"></p>
-          </div>
-        </div>
-      </div>
+    <script>
+      const titles = {
+        home: 'Home Overview',
+        ptc: 'PTC Clicks',
+        tasks: 'Micro-Tasks',
+        offerwalls: 'Survey Offerwalls',
+        advertise: 'Advertise Campaigns',
+        withdraw: 'Withdraw Funds',
+        profile: 'Profile & Wallet',
+        admin: 'Admin Control Panel'
+      };
 
-    <% } %>
-  </main>
+      function showSection(name) {
+        document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+        const target = document.getElementById('sec-' + name);
+        if (target) target.classList.remove('hidden');
 
-  <script>
-    function showTab(name) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.getElementById('tab-' + name).classList.remove('hidden');
-    }
+        document.getElementById('pageTitle').innerText = titles[name] || 'Dashboard';
 
-    let activeAdId = null;
-    let timerInterval = null;
+        document.querySelectorAll('.nav-link').forEach(btn => {
+          const active = btn.getAttribute('data-nav') === name;
+          btn.className = active
+            ? 'nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold'
+            : (btn.getAttribute('data-nav') === 'admin'
+                ? 'nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-amber-300 hover:bg-amber-500/10 border border-amber-500/20 font-semibold'
+                : 'nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 font-medium');
+        });
 
-    async function startPtc(adId, url, seconds) {
-      activeAdId = adId;
-      await fetch('/api/ptc/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adId })
-      });
-
-      window.open(url, '_blank');
-      const box = document.getElementById('ptcTimerBox');
-      const countEl = document.getElementById('ptcCountdown');
-      const btn = document.getElementById('ptcClaimBtn');
-      box.classList.remove('hidden');
-      btn.classList.add('hidden');
-
-      let remaining = seconds;
-      countEl.innerText = remaining;
-      clearInterval(timerInterval);
-
-      timerInterval = setInterval(() => {
-        remaining--;
-        countEl.innerText = remaining;
-        if (remaining <= 0) {
-          clearInterval(timerInterval);
-          btn.classList.remove('hidden');
+        if (window.innerWidth < 1024) {
+          document.getElementById('leftSidebar').classList.add('-translate-x-full');
+          document.getElementById('sidebarOverlay').classList.add('hidden');
         }
-      }, 1000);
-    }
-
-    async function claimPtcReward() {
-      const res = await fetch('/api/ptc/claim', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adId: activeAdId })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert('Credited +' + data.reward + ' Points!');
-        location.reload();
-      } else {
-        alert(data.error);
       }
-    }
 
-    async function withdrawFunds() {
-      const pointsToWithdraw = document.getElementById('withdrawPts').value;
-      const faucetpayAddress = document.getElementById('fpAddress').value;
-      const msg = document.getElementById('withdrawMsg');
-      msg.innerText = 'Processing payout...';
+      function toggleSidebar() {
+        const sb = document.getElementById('leftSidebar');
+        const ov = document.getElementById('sidebarOverlay');
+        sb.classList.toggle('-translate-x-full');
+        ov.classList.toggle('hidden');
+      }
 
-      const res = await fetch('/api/withdraw', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pointsToWithdraw, faucetpayAddress })
-      });
-      const data = await res.json();
-      msg.innerText = data.message || data.error;
-      if (data.success) setTimeout(() => location.reload(), 1500);
-    }
-  </script>
+      // Open requested ?tab= on load
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') && document.getElementById('sec-' + params.get('tab'))) {
+        showSection(params.get('tab'));
+      }
+
+      let activeAdId = null;
+      let timerInterval = null;
+
+      async function startPtc(adId, url, seconds) {
+        activeAdId = adId;
+        await fetch('/api/ptc/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adId })
+        });
+
+        window.open(url, '_blank');
+        const box = document.getElementById('ptcTimerBox');
+        const countEl = document.getElementById('ptcCountdown');
+        const btn = document.getElementById('ptcClaimBtn');
+        box.classList.remove('hidden');
+        btn.classList.add('hidden');
+
+        let remaining = seconds;
+        countEl.innerText = remaining;
+        clearInterval(timerInterval);
+
+        timerInterval = setInterval(() => {
+          remaining--;
+          countEl.innerText = remaining;
+          if (remaining <= 0) {
+            clearInterval(timerInterval);
+            btn.classList.remove('hidden');
+          }
+        }, 1000);
+      }
+
+      async function claimPtcReward() {
+        const res = await fetch('/api/ptc/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adId: activeAdId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Earned +' + data.reward + ' Points ($' + (data.reward / 1000).toFixed(3) + ')!');
+          location.reload();
+        } else {
+          alert(data.error);
+        }
+      }
+
+      async function withdrawFunds() {
+        const pointsToWithdraw = document.getElementById('withdrawPts').value;
+        const faucetpayAddress = document.getElementById('fpAddress').value;
+        const msg = document.getElementById('withdrawMsg');
+        msg.innerText = 'Processing payout...';
+
+        const res = await fetch('/api/withdraw', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pointsToWithdraw, faucetpayAddress })
+        });
+        const data = await res.json();
+        msg.innerText = data.message || data.error;
+        if (data.success) setTimeout(() => location.reload(), 1200);
+      }
+    </script>
+  <% } %>
 </body>
 </html>
