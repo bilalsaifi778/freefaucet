@@ -35,7 +35,6 @@ const pool = new Pool({
 
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'bilalsaifi778@gmail.com').toLowerCase();
 
-// Optional SMTP Mailer (if SMTP_HOST is set in Render Env Vars)
 let mailer = null;
 if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   mailer = nodemailer.createTransport({
@@ -44,6 +43,15 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
     secure: process.env.SMTP_PORT === '465',
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
   });
+}
+
+async function generateUnique6DigitId(client) {
+  for (let i = 0; i < 25; i++) {
+    const candidate = String(crypto.randomInt(100000, 1000000));
+    const check = await client.query('SELECT id FROM users WHERE public_id = $1', [candidate]);
+    if (check.rows.length === 0) return candidate;
+  }
+  throw new Error('Unable to generate unique 6-digit user ID');
 }
 
 async function sendNotification(userId, email, title, message, allowEmail = true) {
@@ -59,15 +67,13 @@ async function sendNotification(userId, email, title, message, allowEmail = true
         replyTo: process.env.SMTP_USER,
         to: email,
         subject: `Free Faucet: ${title}`,
-        text: `Hello,\n\n${message}\n\nRate: 1,000 Points = $1.00.\nIf you did not request this, you can safely ignore this message.\n\n— Free Faucet Team`,
+        text: `Hello,\n\n${message}\n\nRate: 1,000 Points = $1.00.\n\n— Free Faucet Team`,
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; color: #1e293b;">
+          <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; color: #1e293b;">
             <h2 style="color: #1877f2; margin-top: 0;">Free Faucet</h2>
             <h3 style="margin-bottom: 8px;">${title}</h3>
             <p style="line-height: 1.5; font-size: 14px;">${message}</p>
-            <p style="font-size: 12px; color: #475569;">Exchange rate: <strong>1,000 Points = $1.00</strong>.</p>
-            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 18px 0;" />
-            <p style="font-size: 12px; color: #64748b;">You received this account notification from Free Faucet.</p>
+            <p style="font-size: 12px; color: #475569;">Rate: <strong>1,000 Points = $1.00</strong>.</p>
           </div>
         `
       });
@@ -85,7 +91,7 @@ async function awardPointsWithReferral(client, userId, points) {
   );
   const refId = uRes.rows[0] && uRes.rows[0].referred_by;
   if (refId) {
-    const refBonus = Math.max(1, Math.floor(points * 0.10)); // 10% referral commission
+    const refBonus = Math.max(1, Math.floor(points * 0.10));
     await client.query(
       'UPDATE users SET points_balance = points_balance + $1 WHERE id = $2',
       [refBonus, refId]
@@ -97,9 +103,23 @@ function isAdminUser(user) {
   return Boolean(user && (user.is_admin || user.email.toLowerCase() === ADMIN_EMAIL));
 }
 
-app.get('/health', (req, res) => res.status(200).send('OK - Free Faucet Engine Active'));
+let cachedStats = { at: 0, totalUsers: 0, centralUsdt: '0.00' };
+async function getCachedStats() {
+  if (Date.now() - cachedStats.at < 20000) return cachedStats;
+  const [uCnt, tSum] = await Promise.all([
+    pool.query('SELECT COUNT(*)::int AS cnt FROM users'),
+    pool.query('SELECT COALESCE(SUM(usdt_delta), 0)::numeric(14,2) AS total_usdt FROM treasury_ledger')
+  ]);
+  cachedStats = {
+    at: Date.now(),
+    totalUsers: uCnt.rows[0].cnt,
+    centralUsdt: tSum.rows[0].total_usdt
+  };
+  return cachedStats;
+}
 
-// Main Dashboard
+app.get('/health', (req, res) => res.status(200).send('OK - Free Faucet v3 Active'));
+
 app.get('/', async (req, res) => {
   const refParam = (req.query.ref || '').trim();
   const resetToken = (req.query.reset_token || '').trim();
@@ -111,102 +131,124 @@ app.get('/', async (req, res) => {
       refCode: refParam,
       resetToken,
       flashMsg: req.query.msg || '',
-      stats: { totalUsers: 0, activePtc: 0, activeTasks: 0, pendingAds: 0, pendingProofs: 0, pendingWithdrawals: 0, centralUsdt: '0.00' },
+      stats: { totalUsers: 0, activePtc: 0, activeTasks: 0, activeShortlinks: 0, pendingAds: 0, pendingProofs: 0, pendingWithdrawals: 0, openDisputes: 0, centralUsdt: '0.00' },
       ptcAds: [],
       microTasks: [],
+      shortlinks: [],
       submissions: [],
       withdrawals: [],
+      disputes: [],
       notifications: [],
       referrals: [],
       pendingProofs: [],
       pendingAds: [],
       pendingWithdrawals: [],
-      treasuryHistory: []
+      openDisputesList: []
     });
   }
 
-  const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userId]);
-  const user = userRes.rows[0];
-  if (!user) {
-    req.session.destroy();
-    return res.redirect('/');
+  const client = await pool.connect();
+  let user;
+  try {
+    const userRes = await client.query('SELECT * FROM users WHERE id = $1', [req.session.userId]);
+    user = userRes.rows[0];
+    if (!user) {
+      req.session.destroy();
+      return res.redirect('/');
+    }
+    if (!user.public_id) {
+      await client.query('BEGIN');
+      const newSixId = await generateUnique6DigitId(client);
+      const upd = await client.query('UPDATE users SET public_id = $1 WHERE id = $2 RETURNING *', [newSixId, user.id]);
+      await client.query('COMMIT');
+      user = upd.rows[0];
+    }
+  } finally {
+    client.release();
   }
 
   const isAdmin = isAdminUser(user);
 
-  const ptcRes = await pool.query(`
-    SELECT * FROM ptc_ads
-    WHERE status = 'approved'
-      AND remaining_views > 0
-      AND id NOT IN (
-        SELECT ad_id FROM ptc_views
-        WHERE user_id = $1 AND viewed_at > NOW() - INTERVAL '24 HOURS'
-      )
-    ORDER BY reward_points DESC
-  `, [user.id]);
-
-  const tasksRes = await pool.query(`
-    SELECT * FROM micro_tasks
-    WHERE status = 'approved'
-      AND remaining_slots > 0
-      AND id NOT IN (SELECT task_id FROM task_submissions WHERE user_id = $1)
-    ORDER BY reward_points DESC
-  `, [user.id]);
-
-  const subRes = await pool.query(`
-    SELECT ts.*, mt.title, mt.reward_points
-    FROM task_submissions ts
-    JOIN micro_tasks mt ON ts.task_id = mt.id
-    WHERE ts.user_id = $1
-    ORDER BY ts.submitted_at DESC LIMIT 30
-  `, [user.id]);
-
-  const wdRes = await pool.query(`
-    SELECT * FROM withdrawals WHERE user_id = $1 ORDER BY created_at DESC LIMIT 30
-  `, [user.id]);
-
-  const notifRes = await pool.query(`
-    SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 30
-  `, [user.id]);
-
-  const refRes = await pool.query(`
-    SELECT id, email, created_at FROM users WHERE referred_by = $1 ORDER BY created_at DESC
-  `, [user.id]);
-
-  const pendingProofsRes = await pool.query(`
-    SELECT ts.*, mt.title, mt.reward_points, mt.proof_required, u.email
-    FROM task_submissions ts
-    JOIN micro_tasks mt ON ts.task_id = mt.id
-    JOIN users u ON ts.user_id = u.id
-    WHERE ts.status = 'pending'
-    ORDER BY ts.submitted_at ASC
-  `);
-
-  const pendingAdsRes = await pool.query(`
-    SELECT pa.*, u.email AS advertiser_email
-    FROM ptc_ads pa
-    LEFT JOIN users u ON pa.advertiser_id = u.id
-    WHERE pa.status = 'pending'
-    ORDER BY pa.created_at ASC
-  `);
-
-  const pendingWdRes = await pool.query(`
-    SELECT w.*, u.email
-    FROM withdrawals w
-    JOIN users u ON w.user_id = u.id
-    WHERE w.status = 'pending'
-    ORDER BY w.created_at ASC
-  `);
-
-  const treasuryRes = await pool.query(`
-    SELECT COALESCE(SUM(usdt_delta), 0)::numeric(14,2) AS total_usdt FROM treasury_ledger
-  `);
-
-  const treasuryHistRes = await pool.query(`
-    SELECT tl.*, u.email FROM treasury_ledger tl LEFT JOIN users u ON tl.user_id = u.id ORDER BY tl.created_at DESC LIMIT 25
-  `);
-
-  const usersCountRes = await pool.query('SELECT COUNT(*)::int AS cnt FROM users');
+  const [
+    ptcRes,
+    tasksRes,
+    linksRes,
+    subRes,
+    wdRes,
+    dispRes,
+    notifRes,
+    refRes,
+    pendingProofsRes,
+    pendingAdsRes,
+    pendingWdRes,
+    openDispRes,
+    baseStats
+  ] = await Promise.all([
+    pool.query(`
+      SELECT * FROM ptc_ads
+      WHERE status = 'approved'
+        AND remaining_views > 0
+        AND id NOT IN (
+          SELECT ad_id FROM ptc_views
+          WHERE user_id = $1 AND viewed_at > NOW() - INTERVAL '24 HOURS'
+        )
+      ORDER BY reward_points DESC
+    `, [user.id]),
+    pool.query(`
+      SELECT * FROM micro_tasks
+      WHERE status = 'approved'
+        AND remaining_slots > 0
+        AND id NOT IN (SELECT task_id FROM task_submissions WHERE user_id = $1)
+      ORDER BY reward_points DESC
+    `, [user.id]),
+    pool.query(`
+      SELECT s.*,
+        (SELECT COUNT(*)::int FROM shortlink_claims sc WHERE sc.shortlink_id = s.id AND sc.user_id = $1 AND sc.claimed_at > NOW() - INTERVAL '24 HOURS') AS claimed_today
+      FROM shortlinks s
+      ORDER BY s.reward_points DESC
+    `, [user.id]),
+    pool.query(`
+      SELECT ts.*, mt.title, mt.reward_points
+      FROM task_submissions ts
+      JOIN micro_tasks mt ON ts.task_id = mt.id
+      WHERE ts.user_id = $1
+      ORDER BY ts.submitted_at DESC LIMIT 40
+    `, [user.id]),
+    pool.query('SELECT * FROM withdrawals WHERE user_id = $1 ORDER BY created_at DESC LIMIT 40', [user.id]),
+    pool.query('SELECT * FROM disputes WHERE user_id = $1 ORDER BY created_at DESC LIMIT 40', [user.id]),
+    pool.query('SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 40', [user.id]),
+    pool.query('SELECT id, public_id, email, created_at FROM users WHERE referred_by = $1 ORDER BY created_at DESC', [user.id]),
+    pool.query(`
+      SELECT ts.*, mt.title, mt.reward_points, mt.proof_required, u.email, u.public_id
+      FROM task_submissions ts
+      JOIN micro_tasks mt ON ts.task_id = mt.id
+      JOIN users u ON ts.user_id = u.id
+      WHERE ts.status = 'pending'
+      ORDER BY ts.submitted_at ASC
+    `),
+    pool.query(`
+      SELECT pa.*, u.email AS advertiser_email, u.public_id AS advertiser_public_id
+      FROM ptc_ads pa
+      LEFT JOIN users u ON pa.advertiser_id = u.id
+      WHERE pa.status = 'pending'
+      ORDER BY pa.created_at ASC
+    `),
+    pool.query(`
+      SELECT w.*, u.email, u.public_id
+      FROM withdrawals w
+      JOIN users u ON w.user_id = u.id
+      WHERE w.status = 'pending'
+      ORDER BY w.created_at ASC
+    `),
+    pool.query(`
+      SELECT d.*, u.email, u.public_id
+      FROM disputes d
+      JOIN users u ON d.user_id = u.id
+      WHERE d.status = 'open'
+      ORDER BY d.created_at ASC
+    `),
+    getCachedStats()
+  ]);
 
   res.render('dashboard', {
     user,
@@ -215,65 +257,80 @@ app.get('/', async (req, res) => {
     resetToken: '',
     flashMsg: req.query.msg || '',
     stats: {
-      totalUsers: usersCountRes.rows[0].cnt,
+      totalUsers: baseStats.totalUsers,
       activePtc: ptcRes.rows.length,
       activeTasks: tasksRes.rows.length,
+      activeShortlinks: linksRes.rows.length,
       pendingAds: pendingAdsRes.rows.length,
       pendingProofs: pendingProofsRes.rows.length,
       pendingWithdrawals: pendingWdRes.rows.length,
-      centralUsdt: treasuryRes.rows[0].total_usdt
+      openDisputes: openDispRes.rows.length,
+      centralUsdt: baseStats.centralUsdt
     },
     ptcAds: ptcRes.rows,
     microTasks: tasksRes.rows,
+    shortlinks: linksRes.rows,
     submissions: subRes.rows,
     withdrawals: wdRes.rows,
+    disputes: dispRes.rows,
     notifications: notifRes.rows,
     referrals: refRes.rows,
     pendingProofs: pendingProofsRes.rows,
     pendingAds: pendingAdsRes.rows,
     pendingWithdrawals: pendingWdRes.rows,
-    treasuryHistory: treasuryHistRes.rows
+    openDisputesList: openDispRes.rows
   });
 });
 
-// Signup
+// Signup (Generates Unique 6-Character Numeric ID)
 app.post('/auth/signup', async (req, res) => {
   const { email, password, faucetpay_address, ref_code } = req.body;
   const ip = req.headers['cf-connecting-ip'] || req.ip;
   const cleanEmail = (email || '').trim().toLowerCase();
+  const client = await pool.connect();
 
   try {
-    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [cleanEmail]);
+    await client.query('BEGIN');
+    const existing = await client.query('SELECT id FROM users WHERE email = $1', [cleanEmail]);
     if (existing.rows.length > 0) {
+      await client.query('ROLLBACK');
       return res.redirect('/?msg=' + encodeURIComponent('Email already registered. Please login.'));
     }
 
     let referredById = null;
     if (ref_code && ref_code.trim()) {
-      const refUser = await pool.query('SELECT id FROM users WHERE referral_code = $1', [ref_code.trim()]);
+      const refUser = await client.query('SELECT id FROM users WHERE referral_code = $1 OR public_id = $1', [ref_code.trim()]);
       if (refUser.rows.length > 0) referredById = refUser.rows[0].id;
     }
 
+    const sixDigitId = await generateUnique6DigitId(client);
     const hash = await bcrypt.hash(password, 10);
     const shouldBeAdmin = cleanEmail === ADMIN_EMAIL;
-    const tempCode = 'FF' + crypto.randomBytes(3).toString('hex').toUpperCase();
+    const refCodeVal = `FF${sixDigitId}`;
 
-    const created = await pool.query(
-      `INSERT INTO users (email, password_hash, faucetpay_address, is_admin, referral_code, referred_by, last_ip)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [cleanEmail, hash, (faucetpay_address || '').trim(), shouldBeAdmin, tempCode, referredById, ip]
+    const created = await client.query(
+      `INSERT INTO users (public_id, email, password_hash, faucetpay_address, is_admin, referral_code, referred_by, last_ip)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      [sixDigitId, cleanEmail, hash, (faucetpay_address || '').trim(), shouldBeAdmin, refCodeVal, referredById, ip]
     );
+    await client.query('COMMIT');
+    cachedStats.at = 0;
 
-    const newUserId = created.rows[0].id;
-    const finalCode = `FF${1000 + newUserId}`;
-    await pool.query('UPDATE users SET referral_code = $1 WHERE id = $2', [finalCode, newUserId]);
-
-    await sendNotification(newUserId, cleanEmail, 'Welcome to Free Faucet', 'Your account is active. Rate: 1,000 Points = $1.00.', true);
-    req.session.userId = newUserId;
+    await sendNotification(
+      created.rows[0].id,
+      cleanEmail,
+      'Welcome to Free Faucet',
+      `Your account is active. User ID: ${sixDigitId} • Rate: 1,000 Points = $1.00.`,
+      true
+    );
+    req.session.userId = created.rows[0].id;
     res.redirect('/');
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error(err);
     res.status(500).send('Signup error');
+  } finally {
+    client.release();
   }
 });
 
@@ -290,9 +347,8 @@ app.post('/auth/login', async (req, res) => {
     }
     const user = existing.rows[0];
     const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) {
-      return res.redirect('/?msg=' + encodeURIComponent('Invalid password.'));
-    }
+    if (!match) return res.redirect('/?msg=' + encodeURIComponent('Invalid password.'));
+
     await pool.query('UPDATE users SET last_ip = $1 WHERE id = $2', [ip, user.id]);
     req.session.userId = user.id;
     res.redirect('/');
@@ -302,7 +358,7 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
-// Forgot Password — Request Reset Token
+// Forgot Password
 app.post('/auth/forgot-password', async (req, res) => {
   const cleanEmail = (req.body.email || '').trim().toLowerCase();
   const uRes = await pool.query('SELECT id, email FROM users WHERE email = $1', [cleanEmail]);
@@ -325,7 +381,6 @@ app.post('/auth/forgot-password', async (req, res) => {
   res.redirect('/?msg=' + encodeURIComponent('Password reset email sent. Check your Inbox (and Spam folder if needed).'));
 });
 
-// Reset Password with Token
 app.post('/auth/reset-password', async (req, res) => {
   const { token, new_password } = req.body;
   const rRes = await pool.query(
@@ -335,7 +390,6 @@ app.post('/auth/reset-password', async (req, res) => {
   if (rRes.rows.length === 0) {
     return res.redirect('/?msg=' + encodeURIComponent('Invalid or expired reset token.'));
   }
-
   const row = rRes.rows[0];
   const hash = await bcrypt.hash(new_password, 10);
   await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, row.user_id]);
@@ -348,7 +402,7 @@ app.get('/logout', (req, res) => {
   res.redirect('/');
 });
 
-// Update Profile & Email Notifications
+// Profile Update
 app.post('/api/profile/update', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   const { faucetpay_address, email_notifications } = req.body;
@@ -360,7 +414,6 @@ app.post('/api/profile/update', async (req, res) => {
   res.redirect('/?tab=profile&msg=' + encodeURIComponent('Profile settings saved.'));
 });
 
-// Mark Notifications Read
 app.post('/api/notifications/read', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   await pool.query('UPDATE notifications SET is_read = TRUE WHERE user_id = $1', [req.session.userId]);
@@ -370,11 +423,11 @@ app.post('/api/notifications/read', async (req, res) => {
 // User Adds USDT Balance -> Single Central Admin Wallet & Credits Ad Credits (1,000 pts = $1.00)
 app.post('/api/wallet/deposit-usdt', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
-  const usdtAmt = parseFloat(req.body.usdt_amount);
+  const usdtAmt = Number(parseFloat(req.body.usdt_amount).toFixed(2));
   const txRef = (req.body.tx_ref || '').trim();
 
-  if (!usdtAmt || usdtAmt < 0.10) {
-    return res.redirect('/?tab=advertise&msg=' + encodeURIComponent('Minimum USDT deposit is $0.10 (100 Ad Credits).'));
+  if (!Number.isFinite(usdtAmt) || usdtAmt < 0.10 || usdtAmt > 100000) {
+    return res.redirect('/?tab=advertise&msg=' + encodeURIComponent('Enter a valid USDT amount between $0.10 and $100,000.'));
   }
 
   const pointsAdded = Math.floor(usdtAmt * 1000);
@@ -389,16 +442,17 @@ app.post('/api/wallet/deposit-usdt', async (req, res) => {
     await client.query(
       `INSERT INTO treasury_ledger (user_id, entry_type, usdt_delta, points_delta, tx_ref, notes)
        VALUES ($1, 'user_usdt_deposit', $2, $3, $4, 'User USDT balance added to central admin wallet for advertising')`,
-      [req.session.userId, usdtAmt, pointsAdded, txRef || 'MANUAL-LOG']
+      [req.session.userId, usdtAmt, pointsAdded, txRef || 'CENTRAL-WALLET']
     );
     await client.query('COMMIT');
+    cachedStats.at = 0;
 
     const u = uRes.rows[0];
     await sendNotification(
       req.session.userId,
       u.email,
-      'USDT Balance Added for Ads',
-      `Added $${usdtAmt.toFixed(2)} USDT (${pointsAdded} Ad Credits) in central wallet. Ref: ${txRef || 'N/A'}`,
+      'USDT Balance Added to Central Wallet',
+      `Added $${usdtAmt.toFixed(2)} USDT (${pointsAdded} Ad Credits) in central wallet. Ref: ${txRef || 'CENTRAL-WALLET'}`,
       u.email_notifications
     );
 
@@ -407,6 +461,42 @@ app.post('/api/wallet/deposit-usdt', async (req, res) => {
     await client.query('ROLLBACK');
     console.error(err);
     res.status(500).send('Deposit error');
+  } finally {
+    client.release();
+  }
+});
+
+// Claim Shortlink Reward
+app.post('/api/shortlinks/claim', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/');
+  const linkId = parseInt(req.body.shortlink_id, 10);
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    const lRes = await client.query('SELECT * FROM shortlinks WHERE id = $1 FOR UPDATE', [linkId]);
+    if (lRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.redirect('/?tab=shortlinks&msg=' + encodeURIComponent('Shortlink not found.'));
+    }
+    const link = lRes.rows[0];
+    const cntRes = await client.query(
+      "SELECT COUNT(*)::int AS cnt FROM shortlink_claims WHERE user_id = $1 AND shortlink_id = $2 AND claimed_at > NOW() - INTERVAL '24 HOURS'",
+      [req.session.userId, linkId]
+    );
+    if (cntRes.rows[0].cnt >= link.daily_limit) {
+      await client.query('ROLLBACK');
+      return res.redirect('/?tab=shortlinks&msg=' + encodeURIComponent('Daily limit reached for this shortlink.'));
+    }
+
+    await client.query('INSERT INTO shortlink_claims (user_id, shortlink_id) VALUES ($1, $2)', [req.session.userId, linkId]);
+    await awardPointsWithReferral(client, req.session.userId, link.reward_points);
+    await client.query('COMMIT');
+
+    res.redirect('/?tab=shortlinks&msg=' + encodeURIComponent(`Claimed +${link.reward_points} pts ($${(link.reward_points / 1000).toFixed(3)}) from shortlink!`));
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).send('Shortlink claim error');
   } finally {
     client.release();
   }
@@ -472,7 +562,7 @@ app.post('/api/tasks/submit', async (req, res) => {
     const taskRes = await client.query("SELECT * FROM micro_tasks WHERE id = $1 AND status = 'approved' AND remaining_slots > 0 FOR UPDATE", [task_id]);
     if (taskRes.rows.length === 0) {
       await client.query('ROLLBACK');
-      return res.redirect('/?tab=tasks&msg=' + encodeURIComponent('Task no longer available.'));
+      return res.redirect('/?tab=tasks-view&msg=' + encodeURIComponent('Task no longer available.'));
     }
     await client.query(
       'INSERT INTO task_submissions (task_id, user_id, proof_text, screenshot_url) VALUES ($1, $2, $3, $4)',
@@ -480,7 +570,7 @@ app.post('/api/tasks/submit', async (req, res) => {
     );
     await client.query('UPDATE micro_tasks SET remaining_slots = remaining_slots - 1 WHERE id = $1', [task_id]);
     await client.query('COMMIT');
-    res.redirect('/?tab=tasks&msg=' + encodeURIComponent('Proof submitted! Waiting for Admin review.'));
+    res.redirect('/?tab=tasks-submissions&msg=' + encodeURIComponent('Proof submitted! Track status under My Submission.'));
   } catch (err) {
     await client.query('ROLLBACK');
     res.status(500).send('Submission error');
@@ -489,7 +579,19 @@ app.post('/api/tasks/submit', async (req, res) => {
   }
 });
 
-// Advertiser Creates Campaign Using Ad Credits (1,000 pts = $1.00) -> Pending Admin Approval
+// Create Dispute
+app.post('/api/disputes/create', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/');
+  const { category, reference_id, subject, details } = req.body;
+  await pool.query(
+    `INSERT INTO disputes (user_id, category, reference_id, subject, details, status)
+     VALUES ($1, $2, $3, $4, $5, 'open')`,
+    [req.session.userId, category || 'task_proof', (reference_id || '').trim(), (subject || '').trim(), (details || '').trim()]
+  );
+  res.redirect('/?tab=tasks-disputes&msg=' + encodeURIComponent('Dispute submitted! Admin will review it in My Disputes.'));
+});
+
+// Advertiser Campaign Request
 app.post('/api/advertiser/create-ptc', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   const { title, description, url, timer_seconds, reward_points, total_views } = req.body;
@@ -522,7 +624,7 @@ app.post('/api/advertiser/create-ptc', async (req, res) => {
   }
 });
 
-// User Submits Withdrawal Request -> ALWAYS 'pending' Until Admin Approves
+// User Withdrawal Request -> Pending Until Admin Approves
 app.post('/api/withdraw/request', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   const points = parseInt(req.body.points_amount, 10);
@@ -573,7 +675,7 @@ app.post('/api/withdraw/request', async (req, res) => {
   }
 });
 
-// ADMIN: Create Micro-Task
+// ADMIN: Add Micro-Task
 app.post('/api/admin/tasks/create', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   const uRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userId]);
@@ -585,10 +687,10 @@ app.post('/api/admin/tasks/create', async (req, res) => {
      VALUES ($1, $2, $3, $4, $5, $6, 'approved')`,
     [req.session.userId, title, instructions, proof_required, Math.max(1, parseInt(reward_points, 10) || 100), Math.max(1, parseInt(total_slots, 10) || 50)]
   );
-  res.redirect('/?tab=admin&msg=' + encodeURIComponent('Micro-task published!'));
+  res.redirect('/?tab=admin&msg=' + encodeURIComponent('Micro-task added and published!'));
 });
 
-// ADMIN: Create Instant PTC Ad
+// ADMIN: Add PTC Ad
 app.post('/api/admin/ptc/create', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   const uRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userId]);
@@ -600,17 +702,31 @@ app.post('/api/admin/ptc/create', async (req, res) => {
      VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 'approved')`,
     [req.session.userId, title, description || '', url, Math.max(5, parseInt(timer_seconds, 10) || 15), Math.max(1, parseInt(reward_points, 10) || 10), Math.max(1, parseInt(total_views, 10) || 100)]
   );
-  res.redirect('/?tab=admin&msg=' + encodeURIComponent('PTC ad published!'));
+  res.redirect('/?tab=admin&msg=' + encodeURIComponent('PTC ad added and published!'));
 });
 
-// ADMIN: Record Central USDT Treasury Deposit & Credit User/Ad Balance
+// ADMIN: Add Shortlink Task
+app.post('/api/admin/shortlinks/create', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/');
+  const uRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userId]);
+  if (!isAdminUser(uRes.rows[0])) return res.status(403).send('Admin only');
+
+  const { title, target_url, reward_points, daily_limit } = req.body;
+  await pool.query(
+    'INSERT INTO shortlinks (title, target_url, reward_points, daily_limit) VALUES ($1, $2, $3, $4)',
+    [title, target_url, Math.max(1, parseInt(reward_points, 10) || 50), Math.max(1, parseInt(daily_limit, 10) || 5)]
+  );
+  res.redirect('/?tab=admin&msg=' + encodeURIComponent('Shortlink task added!'));
+});
+
+// ADMIN: Central USDT Treasury Deposit
 app.post('/api/admin/treasury/topup', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   const uRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userId]);
   if (!isAdminUser(uRes.rows[0])) return res.status(403).send('Admin only');
 
-  const targetEmail = (req.body.target_email || '').trim().toLowerCase();
-  const usdtAmt = parseFloat(req.body.usdt_amount) || 0;
+  const targetIdOrEmail = (req.body.target_email || '').trim().toLowerCase();
+  const usdtAmt = Number(parseFloat(req.body.usdt_amount).toFixed(2)) || 0;
   const txRef = (req.body.tx_ref || '').trim();
   const pts = Math.floor(usdtAmt * 1000);
 
@@ -618,8 +734,11 @@ app.post('/api/admin/treasury/topup', async (req, res) => {
   try {
     await client.query('BEGIN');
     let targetUserId = req.session.userId;
-    if (targetEmail) {
-      const tRes = await client.query('SELECT id, advertiser_balance FROM users WHERE email = $1 FOR UPDATE', [targetEmail]);
+    if (targetIdOrEmail) {
+      const tRes = await client.query(
+        'SELECT id FROM users WHERE LOWER(email) = $1 OR public_id = $1 FOR UPDATE',
+        [targetIdOrEmail]
+      );
       if (tRes.rows.length > 0) {
         targetUserId = tRes.rows[0].id;
         await client.query('UPDATE users SET advertiser_balance = advertiser_balance + $1 WHERE id = $2', [pts, targetUserId]);
@@ -631,6 +750,7 @@ app.post('/api/admin/treasury/topup', async (req, res) => {
       [targetUserId, usdtAmt, pts, txRef || 'ADMIN-TREASURY']
     );
     await client.query('COMMIT');
+    cachedStats.at = 0;
     res.redirect('/?tab=admin&msg=' + encodeURIComponent(`Recorded $${usdtAmt.toFixed(2)} USDT in central wallet (${pts} pts).`));
   } catch (err) {
     await client.query('ROLLBACK');
@@ -640,7 +760,7 @@ app.post('/api/admin/treasury/topup', async (req, res) => {
   }
 });
 
-// ADMIN: Approve or Reject User Task Proof
+// ADMIN: Approve or Reject Task Proof
 app.post('/api/admin/proofs/review', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   const uRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userId]);
@@ -739,7 +859,7 @@ app.post('/api/admin/ads/review', async (req, res) => {
   }
 });
 
-// ADMIN: Approve or Reject User Withdrawal (Mandatory Admin Approval Gate)
+// ADMIN: Approve or Reject Withdrawal (Mandatory Admin Gate)
 app.post('/api/admin/withdrawals/review', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   const uRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userId]);
@@ -779,6 +899,7 @@ app.post('/api/admin/withdrawals/review', async (req, res) => {
       await client.query('UPDATE users SET points_balance = points_balance + $1 WHERE id = $2', [wd.points_amount, wd.user_id]);
     }
     await client.query('COMMIT');
+    cachedStats.at = 0;
 
     await sendNotification(
       wd.user_id,
@@ -799,6 +920,54 @@ app.post('/api/admin/withdrawals/review', async (req, res) => {
   }
 });
 
+// ADMIN: Resolve User Dispute
+app.post('/api/admin/disputes/resolve', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/');
+  const uRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userId]);
+  if (!isAdminUser(uRes.rows[0])) return res.status(403).send('Admin only');
+
+  const { dispute_id, admin_response, bonus_points } = req.body;
+  const bonus = Math.max(0, parseInt(bonus_points, 10) || 0);
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    const dRes = await client.query(`
+      SELECT d.*, u.email, u.email_notifications
+      FROM disputes d
+      JOIN users u ON d.user_id = u.id
+      WHERE d.id = $1 AND d.status = 'open' FOR UPDATE
+    `, [dispute_id]);
+    if (dRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.redirect('/?tab=admin');
+    }
+    const d = dRes.rows[0];
+    await client.query(
+      "UPDATE disputes SET status = 'resolved', admin_response = $1, resolved_at = NOW() WHERE id = $2",
+      [(admin_response || 'Resolved by Admin').trim(), dispute_id]
+    );
+    if (bonus > 0) {
+      await awardPointsWithReferral(client, d.user_id, bonus);
+    }
+    await client.query('COMMIT');
+
+    await sendNotification(
+      d.user_id,
+      d.email,
+      'Dispute Resolved',
+      `Dispute "${d.subject}" resolved: ${admin_response || 'Reviewed by Admin'}${bonus > 0 ? ` (+${bonus} pts awarded)` : ''}.`,
+      d.email_notifications
+    );
+    res.redirect('/?tab=admin&msg=' + encodeURIComponent(`Dispute #${dispute_id} resolved.`));
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).send('Dispute resolution error');
+  } finally {
+    client.release();
+  }
+});
+
 // Postback Webhook (1,000 Points = $1.00; 70% share to user => 700 pts per $1.00)
 app.get('/api/postback/:network', async (req, res) => {
   const { network } = req.params;
@@ -809,8 +978,15 @@ app.get('/api/postback/:network', async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    const uLookup = await client.query('SELECT id FROM users WHERE id::text = $1 OR public_id = $1', [String(userid)]);
+    if (uLookup.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).send('USER_NOT_FOUND');
+    }
+    const targetUserId = uLookup.rows[0].id;
+
     if (status === '2' || status === 'chargeback' || userPoints < 0) {
-      await client.query('UPDATE users SET points_balance = points_balance - $1 WHERE id = $2', [Math.abs(userPoints), userid]);
+      await client.query('UPDATE users SET points_balance = points_balance - $1 WHERE id = $2', [Math.abs(userPoints), targetUserId]);
       await client.query('COMMIT');
       return res.status(200).send('OK_CHARGEBACK');
     }
@@ -819,8 +995,8 @@ app.get('/api/postback/:network', async (req, res) => {
       await client.query('ROLLBACK');
       return res.status(200).send('DUP');
     }
-    await client.query('INSERT INTO postback_logs (network, tx_id, user_id, points_awarded) VALUES ($1, $2, $3, $4)', [network, txid, userid, userPoints]);
-    await awardPointsWithReferral(client, userid, userPoints);
+    await client.query('INSERT INTO postback_logs (network, tx_id, user_id, points_awarded) VALUES ($1, $2, $3, $4)', [network, txid, targetUserId, userPoints]);
+    await awardPointsWithReferral(client, targetUserId, userPoints);
     await client.query('COMMIT');
     res.status(200).send('OK');
   } catch (err) {
@@ -832,4 +1008,4 @@ app.get('/api/postback/:network', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Free Faucet running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Free Faucet v3 running on port ${PORT}`));
