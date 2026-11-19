@@ -5,11 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Free Faucet — Earn & Advertise</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+  <style>
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes floatGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(24, 119, 242, 0.22); }
+      50% { box-shadow: 0 0 18px 2px rgba(24, 119, 242, 0.35); }
+    }
+    .anim-section {
+      animation: fadeSlideIn 0.28s ease-out both;
+    }
+    .card-lift {
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .card-lift:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 22px -6px rgba(15, 23, 42, 0.16);
+    }
+    .pulse-badge {
+      animation: floatGlow 2.6s infinite ease-in-out;
+    }
+    .bg-grid-pattern {
+      background-image: radial-gradient(rgba(24, 119, 242, 0.11) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .dark .bg-grid-pattern {
+      background-image: radial-gradient(rgba(96, 165, 250, 0.12) 1px, transparent 1px);
+    }
+  </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen font-sans">
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen font-sans bg-grid-pattern transition-colors duration-200">
 
   <% if (flashMsg) { %>
-    <div id="flashBanner" class="bg-amber-400 text-slate-950 text-xs sm:text-sm font-semibold px-4 py-2.5 flex items-center justify-between">
+    <div id="flashBanner" class="anim-section bg-amber-400 text-slate-950 text-xs sm:text-sm font-semibold px-4 py-2.5 flex items-center justify-between shadow">
       <span><%= flashMsg %></span>
       <button onclick="document.getElementById('flashBanner').remove()" class="font-bold px-2">✕</button>
     </div>
@@ -17,17 +50,20 @@
 
   <% if (!user) { %>
     <div class="min-h-screen flex flex-col">
-      <div class="bg-[#1877f2] text-white h-14 px-6 flex items-center justify-between shadow">
+      <div class="bg-gradient-to-r from-[#1877f2] to-blue-600 text-white h-14 px-6 flex items-center justify-between shadow">
         <div class="flex items-center space-x-2.5">
-          <span class="bg-white text-[#1877f2] font-black px-2.5 py-0.5 rounded text-base">FF</span>
+          <span class="bg-white text-[#1877f2] font-black px-2.5 py-0.5 rounded text-base pulse-badge">FF</span>
           <span class="font-extrabold text-xl tracking-tight">Free Faucet</span>
         </div>
-        <span class="text-xs bg-white/15 px-3 py-1 rounded-full">1,000 Points = $1.00</span>
+        <div class="flex items-center space-x-3">
+          <span class="text-xs bg-white/15 px-3 py-1 rounded-full">1,000 Points = $1.00</span>
+          <button onclick="toggleTheme()" class="text-xs bg-black/20 hover:bg-black/30 px-2.5 py-1 rounded-full">🌓 Theme</button>
+        </div>
       </div>
 
       <div class="flex-1 flex items-center justify-center p-4">
-        <div class="w-full max-w-md bg-white rounded-xl border border-slate-200 shadow-md p-6">
-          <div class="flex border-b border-slate-200 mb-5 text-sm font-bold">
+        <div class="anim-section w-full max-w-md bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl p-6">
+          <div class="flex border-b border-slate-200 dark:border-slate-800 mb-5 text-sm font-bold">
             <button onclick="authTab('login')" id="atab-login" class="flex-1 pb-2.5 text-[#1877f2] border-b-2 border-[#1877f2]">Login</button>
             <button onclick="authTab('signup')" id="atab-signup" class="flex-1 pb-2.5 text-slate-500">Sign Up</button>
             <button onclick="authTab('forgot')" id="atab-forgot" class="flex-1 pb-2.5 text-slate-500">Forgot Password</button>
@@ -35,47 +71,47 @@
 
           <form id="aform-login" action="/auth/login" method="POST" class="space-y-3.5">
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Email</label>
-              <input type="email" name="email" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Email</label>
+              <input type="email" name="email" required class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
-              <input type="password" name="password" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Password</label>
+              <input type="password" name="password" required class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm">
             </div>
-            <button type="submit" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm">Login to Free Faucet</button>
+            <button type="submit" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm transition">Login to Free Faucet</button>
           </form>
 
           <form id="aform-signup" action="/auth/signup" method="POST" class="space-y-3.5 hidden">
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Email</label>
-              <input type="email" name="email" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Email</label>
+              <input type="email" name="email" required class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
-              <input type="password" name="password" required minlength="6" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Password</label>
+              <input type="password" name="password" required minlength="6" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">USDT / FaucetPay Address (Optional)</label>
-              <input type="text" name="faucetpay_address" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">USDT / FaucetPay Address (Optional)</label>
+              <input type="text" name="faucetpay_address" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Referral Code (Optional)</label>
-              <input type="text" name="ref_code" value="<%= refCode %>" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Referral Code or 6-Digit ID (Optional)</label>
+              <input type="text" name="ref_code" value="<%= refCode %>" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm">
             </div>
-            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-sm">Create Free Account</button>
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-sm transition">Create Free Account</button>
           </form>
 
           <div id="aform-forgot" class="space-y-4 hidden">
             <form action="/auth/forgot-password" method="POST" class="space-y-3">
               <p class="text-xs text-slate-500">Enter your registered email to receive a password reset token.</p>
-              <input type="email" name="email" required placeholder="your@email.com" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              <input type="email" name="email" required placeholder="your@email.com" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm">
               <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2 rounded-lg text-sm">Send Reset Token</button>
             </form>
 
-            <form action="/auth/reset-password" method="POST" class="space-y-3 pt-3 border-t border-slate-200">
-              <p class="text-xs font-semibold text-slate-700">Already have a reset token?</p>
-              <input type="text" name="token" value="<%= resetToken %>" required placeholder="Paste reset token" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
-              <input type="password" name="new_password" required minlength="6" placeholder="New password" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+            <form action="/auth/reset-password" method="POST" class="space-y-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Already have a reset token?</p>
+              <input type="text" name="token" value="<%= resetToken %>" required placeholder="Paste reset token" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm">
+              <input type="password" name="new_password" required minlength="6" placeholder="New password" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm">
               <button type="submit" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-sm">Reset Password</button>
             </form>
           </div>
@@ -99,26 +135,27 @@
   <% } else { %>
     <% const unreadCount = notifications.filter(n => !n.is_read).length; %>
 
-    <header class="bg-[#1877f2] text-white h-14 px-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+    <header class="bg-gradient-to-r from-[#1877f2] to-blue-600 text-white h-14 px-4 flex items-center justify-between sticky top-0 z-30 shadow">
       <div class="flex items-center space-x-3">
         <button onclick="toggleSidebar()" class="p-1.5 rounded hover:bg-white/15 text-lg leading-none">☰</button>
         <button onclick="showSection('home')" class="flex items-center space-x-2 text-left">
-          <span class="bg-white text-[#1877f2] font-black px-2 py-0.5 rounded text-sm">FF</span>
+          <span class="bg-white text-[#1877f2] font-black px-2 py-0.5 rounded text-sm pulse-badge">FF</span>
           <span class="font-extrabold text-lg tracking-tight">Free Faucet</span>
         </button>
       </div>
 
       <div class="hidden md:flex items-center space-x-2 text-xs font-bold">
-        <div class="bg-blue-900/50 border border-white/20 px-3 py-1.5 rounded-full">
+        <div class="bg-blue-950/45 border border-white/20 px-3 py-1.5 rounded-full">
           Earn: <span class="text-emerald-300"><%= user.points_balance %> pts</span> ($<%= (user.points_balance / 1000).toFixed(2) %>)
         </div>
-        <div class="bg-blue-900/50 border border-white/20 px-3 py-1.5 rounded-full">
+        <div class="bg-blue-950/45 border border-white/20 px-3 py-1.5 rounded-full">
           Ad Credits: <span class="text-amber-300"><%= user.advertiser_balance %> pts</span> ($<%= (user.advertiser_balance / 1000).toFixed(2) %>)
         </div>
       </div>
 
-      <div class="flex items-center space-x-3 text-xs font-semibold">
-        <span class="bg-white/15 px-3 py-1 rounded">User Id: <%= 795654 + user.id %></span>
+      <div class="flex items-center space-x-2 sm:space-x-3 text-xs font-semibold">
+        <span class="bg-white/15 px-3 py-1 rounded">User Id: <%= user.public_id %></span>
+        <button onclick="toggleTheme()" title="Switch Light / Dark Theme" class="hover:bg-white/15 p-1.5 rounded">🌓</button>
         <button onclick="showSection('profile')" title="Email & Notification Settings" class="hover:bg-white/15 p-1.5 rounded">✉️</button>
         <button onclick="showSection('inbox')" title="Inbox Notifications" class="relative hover:bg-white/15 p-1.5 rounded">
           🔔
@@ -130,39 +167,66 @@
     </header>
 
     <div class="flex min-h-[calc(100vh-3.5rem)]">
-      <aside id="leftSidebar" class="w-60 bg-white border-r border-slate-200 shrink-0 flex flex-col justify-between">
-        <div class="p-3 space-y-4 text-xs">
-          <div onclick="showSection('profile')" class="cursor-pointer flex items-center space-x-2.5 p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200">
+      <aside id="leftSidebar" class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shrink-0 flex flex-col justify-between transition-colors">
+        <div class="p-3 space-y-3 text-xs">
+          <div onclick="showSection('profile')" class="cursor-pointer flex items-center space-x-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition">
             <div class="w-9 h-9 rounded-full bg-[#1877f2] text-white font-extrabold flex items-center justify-center text-sm shrink-0">
               <%= user.email.charAt(0).toUpperCase() %>
             </div>
             <div class="min-w-0">
-              <div class="font-bold text-slate-800 truncate"><%= user.email %></div>
-              <div class="text-[11px] text-slate-500">ID: <%= 795654 + user.id %> • <%= isAdmin ? 'Admin' : 'Member' %></div>
+              <div class="font-bold text-slate-800 dark:text-slate-100 truncate"><%= user.email %></div>
+              <div class="text-[11px] text-slate-500">ID: <%= user.public_id %> • <%= isAdmin ? 'Admin' : 'Member' %></div>
             </div>
           </div>
 
-          <button onclick="showSection('home')" data-nav="home" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 font-bold">
+          <button onclick="showSection('home')" data-nav="home" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-bold">
             <span>🏠</span><span>Home</span>
           </button>
 
           <div>
             <div class="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Earn</div>
             <div class="space-y-0.5">
-              <button onclick="showSection('tasks')" data-nav="tasks" class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium">
-                <span>📋 Tasks</span><span class="text-slate-400"><%= microTasks.length %></span>
+              <!-- TASKS DROPDOWN (View Task, My Submission, My Disputes) -->
+              <div>
+                <button onclick="toggleTasksDropdown()" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold">
+                  <span class="flex items-center space-x-2"><span>📋</span><span>Tasks</span></span>
+                  <span id="tasksChevron" class="text-[10px] text-slate-400">▼</span>
+                </button>
+                <div id="tasksDropdownMenu" class="ml-4 pl-2.5 border-l-2 border-[#1877f2]/40 space-y-0.5 mt-0.5">
+                  <button onclick="showSection('tasks-view')" data-nav="tasks-view" class="nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <span>• View Task</span><span class="text-[11px] text-[#1877f2] font-bold"><%= microTasks.length %></span>
+                  </button>
+                  <button onclick="showSection('tasks-submissions')" data-nav="tasks-submissions" class="nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <span>• My Submission</span><span class="text-[11px] text-slate-400"><%= submissions.length %></span>
+                  </button>
+                  <button onclick="showSection('tasks-disputes')" data-nav="tasks-disputes" class="nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <span>• My Disputes</span><span class="text-[11px] text-amber-600 font-bold"><%= disputes.length %></span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- SHORTLINKS TASK -->
+              <button onclick="showSection('shortlinks')" data-nav="shortlinks" class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium">
+                <span class="flex items-center space-x-2"><span>🔗</span><span>Shortlinks</span></span>
+                <span class="text-slate-400"><%= shortlinks.length %></span>
               </button>
-              <button onclick="showSection('surveys')" data-nav="surveys" class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium">
-                <span>📊 Surveys</span>
+
+              <button onclick="showSection('surveys')" data-nav="surveys" class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium">
+                <span class="flex items-center space-x-2"><span>📊</span><span>Surveys</span></span>
               </button>
-              <button onclick="showSection('clicks')" data-nav="clicks" class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium">
-                <span>🖱️ Clicks</span><span class="text-slate-400"><%= ptcAds.length %></span>
+
+              <button onclick="showSection('clicks')" data-nav="clicks" class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium">
+                <span class="flex items-center space-x-2"><span>🖱️</span><span>Clicks</span></span>
+                <span class="text-slate-400"><%= ptcAds.length %></span>
               </button>
-              <button onclick="showSection('advertise')" data-nav="advertise" class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium">
-                <span>💵 Buy Points / Ads</span>
+
+              <button onclick="showSection('advertise')" data-nav="advertise" class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium">
+                <span class="flex items-center space-x-2"><span>💵</span><span>Buy Points / Ads</span></span>
               </button>
-              <button onclick="showSection('referrals')" data-nav="referrals" class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium">
-                <span>👥 Referrals</span><span class="text-slate-400"><%= referrals.length %></span>
+
+              <button onclick="showSection('referrals')" data-nav="referrals" class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium">
+                <span class="flex items-center space-x-2"><span>👥</span><span>Referrals</span></span>
+                <span class="text-slate-400"><%= referrals.length %></span>
               </button>
             </div>
           </div>
@@ -170,110 +234,108 @@
           <div>
             <div class="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Account</div>
             <div class="space-y-0.5">
-              <button onclick="showSection('history')" data-nav="history" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium">
-                <span>🕒 History</span>
+              <button onclick="showSection('withdraw')" data-nav="withdraw" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium">
+                <span>💳</span><span>Redeem / Withdraw</span>
               </button>
-              <button onclick="showSection('withdraw')" data-nav="withdraw" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium">
-                <span>💳 Redeem / Withdraw</span>
+              <button onclick="showSection('profile')" data-nav="profile" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium">
+                <span>👤</span><span>My Profile</span>
               </button>
-              <button onclick="showSection('profile')" data-nav="profile" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium">
-                <span>👤 My Profile</span>
-              </button>
-              <button onclick="showSection('inbox')" data-nav="inbox" class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium">
-                <span>📥 Inbox</span>
+              <button onclick="showSection('inbox')" data-nav="inbox" class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium">
+                <span class="flex items-center space-x-2"><span>📥</span><span>Inbox</span></span>
                 <% if (unreadCount > 0) { %><span class="bg-[#1877f2] text-white text-[10px] px-1.5 rounded-full"><%= unreadCount %></span><% } %>
               </button>
             </div>
           </div>
 
           <% if (isAdmin) { %>
-            <div class="pt-2 border-t border-slate-200">
-              <button onclick="showSection('admin')" data-nav="admin" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-amber-100 text-amber-900 font-extrabold border border-amber-300">
+            <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
+              <button onclick="showSection('admin')" data-nav="admin" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 font-extrabold border border-amber-300 dark:border-amber-700">
                 <span>🛡️ Admin Panel</span>
                 <span class="bg-amber-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                  <%= stats.pendingProofs + stats.pendingAds + stats.pendingWithdrawals %>
+                  <%= stats.pendingProofs + stats.pendingAds + stats.pendingWithdrawals + stats.openDisputes %>
                 </span>
               </button>
             </div>
           <% } %>
         </div>
 
-        <div class="p-3 border-t border-slate-200 text-[11px] text-slate-500 space-y-1">
-          <div>Rate: <strong>1,000 pts = $1.00</strong></div>
-          <a href="/logout" class="inline-block text-rose-600 font-bold hover:underline">Logout</a>
+        <div class="p-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 flex items-center justify-between">
+          <span>1,000 pts = $1.00</span>
+          <a href="/logout" class="text-rose-600 font-bold hover:underline">Logout</a>
         </div>
       </aside>
 
       <main class="flex-1 p-4 sm:p-6 min-w-0">
-        <div id="ptcTimerBox" class="hidden mb-4 bg-amber-100 border border-amber-400 text-amber-950 p-3.5 rounded-lg flex items-center justify-between text-sm">
+        <div id="ptcTimerBox" class="anim-section hidden mb-4 bg-amber-100 border border-amber-400 text-amber-950 p-3.5 rounded-xl flex items-center justify-between text-sm shadow">
           <div><strong>PTC Timer:</strong> Stay on the ad page — <span id="ptcCountdown" class="font-black text-base">15</span>s left</div>
           <button id="ptcClaimBtn" onclick="claimPtcReward()" class="hidden bg-emerald-600 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Claim Points</button>
         </div>
 
-        <section id="sec-home" class="page-section space-y-5">
-          <div class="flex items-center justify-between">
-            <h1 class="text-lg font-bold text-slate-800">Free Faucet Dashboard <span class="text-xs font-normal text-slate-500">(1,000 Points = $1.00)</span></h1>
-            <span class="text-xs text-slate-500">User Id: <%= 795654 + user.id %></span>
+        <!-- HOME -->
+        <section id="sec-home" class="page-section anim-section space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h1 class="text-lg font-bold">Free Faucet Dashboard <span class="text-xs font-normal text-slate-500">(1,000 Points = $1.00)</span></h1>
+            <span class="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1 rounded-full">User ID: <strong><%= user.public_id %></strong></span>
           </div>
 
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+            <div class="card-lift bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
               <div class="text-xs text-slate-500">Earn Balance</div>
               <div class="text-xl font-extrabold text-[#1877f2] mt-0.5"><%= user.points_balance %> pts</div>
               <div class="text-xs text-emerald-600 font-semibold">$<%= (user.points_balance / 1000).toFixed(2) %></div>
             </div>
-            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+            <div class="card-lift bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
               <div class="text-xs text-slate-500">Ad Credits Balance</div>
-              <div class="text-xl font-extrabold text-slate-800 mt-0.5"><%= user.advertiser_balance %> pts</div>
+              <div class="text-xl font-extrabold mt-0.5"><%= user.advertiser_balance %> pts</div>
               <div class="text-xs text-slate-500">$<%= (user.advertiser_balance / 1000).toFixed(2) %></div>
             </div>
-            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-              <div class="text-xs text-slate-500">Available Tasks & Clicks</div>
-              <div class="text-xl font-extrabold text-slate-800 mt-0.5"><%= microTasks.length + ptcAds.length %></div>
-              <div class="text-xs text-slate-500"><%= microTasks.length %> tasks • <%= ptcAds.length %> clicks</div>
+            <div class="card-lift bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div class="text-xs text-slate-500">Shortlinks & Tasks</div>
+              <div class="text-xl font-extrabold mt-0.5"><%= microTasks.length + shortlinks.length + ptcAds.length %></div>
+              <div class="text-xs text-slate-500"><%= microTasks.length %> tasks • <%= shortlinks.length %> links</div>
             </div>
-            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+            <div class="card-lift bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
               <div class="text-xs text-slate-500">Referrals</div>
-              <div class="text-xl font-extrabold text-slate-800 mt-0.5"><%= referrals.length %></div>
+              <div class="text-xl font-extrabold mt-0.5"><%= referrals.length %></div>
               <div class="text-xs text-slate-500">Earn 10% referral bonus</div>
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
             <% microTasks.forEach(task => { %>
-              <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm flex flex-col justify-between">
+              <div class="card-lift bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm flex flex-col justify-between">
                 <div>
-                  <div class="h-28 bg-gradient-to-r from-[#1877f2] to-sky-500 text-white p-3 flex flex-col justify-between">
+                  <div class="h-28 bg-gradient-to-br from-[#1877f2] via-blue-600 to-indigo-600 text-white p-3 flex flex-col justify-between">
                     <span class="text-[10px] uppercase tracking-wider bg-black/20 px-2 py-0.5 rounded w-fit">Micro-Task</span>
                     <div class="font-bold text-sm leading-snug line-clamp-2"><%= task.title %></div>
                   </div>
-                  <div class="p-3 text-xs text-slate-600 space-y-1.5">
+                  <div class="p-3 text-xs text-slate-600 dark:text-slate-300 space-y-1">
                     <p class="line-clamp-2"><%= task.instructions %></p>
-                    <p class="text-[11px] text-amber-700 font-medium">Proof: <%= task.proof_required %></p>
+                    <p class="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Proof: <%= task.proof_required %></p>
                   </div>
                 </div>
                 <div class="p-3 pt-0">
-                  <button onclick="showSection('tasks')" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2 rounded text-xs">
+                  <button onclick="showSection('tasks-view')" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition">
                     EARN <%= task.reward_points %> PTS ($<%= (task.reward_points / 1000).toFixed(2) %>)
                   </button>
                 </div>
               </div>
             <% }) %>
 
-            <% ptcAds.forEach(ad => { %>
-              <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm flex flex-col justify-between">
+            <% shortlinks.forEach(sl => { %>
+              <div class="card-lift bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm flex flex-col justify-between">
                 <div>
-                  <div class="h-28 bg-gradient-to-r from-emerald-600 to-teal-500 text-white p-3 flex flex-col justify-between">
-                    <span class="text-[10px] uppercase tracking-wider bg-black/20 px-2 py-0.5 rounded w-fit">PTC Click • <%= ad.timer_seconds %>s</span>
-                    <div class="font-bold text-sm leading-snug line-clamp-2"><%= ad.title %></div>
+                  <div class="h-28 bg-gradient-to-br from-emerald-600 to-teal-500 text-white p-3 flex flex-col justify-between">
+                    <span class="text-[10px] uppercase tracking-wider bg-black/20 px-2 py-0.5 rounded w-fit">Shortlink</span>
+                    <div class="font-bold text-sm leading-snug line-clamp-2"><%= sl.title %></div>
                   </div>
-                  <div class="p-3 text-xs text-slate-600">
-                    <p class="line-clamp-2"><%= ad.description || 'Visit advertiser page and wait for timer.' %></p>
+                  <div class="p-3 text-xs text-slate-500">
+                    Daily claims: <%= sl.claimed_today %> / <%= sl.daily_limit %>
                   </div>
                 </div>
                 <div class="p-3 pt-0">
-                  <button onclick="startPtc(<%= ad.id %>, '<%= ad.url %>', <%= ad.timer_seconds %>)" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2 rounded text-xs">
-                    EARN <%= ad.reward_points %> PTS ($<%= (ad.reward_points / 1000).toFixed(3) %>)
+                  <button onclick="showSection('shortlinks')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-xs transition">
+                    SHORTLINK +<%= sl.reward_points %> PTS ($<%= (sl.reward_points / 1000).toFixed(3) %>)
                   </button>
                 </div>
               </div>
@@ -281,305 +343,413 @@
           </div>
         </section>
 
-        <section id="sec-tasks" class="page-section hidden space-y-4">
-          <h2 class="text-lg font-bold">Available Tasks</h2>
+        <!-- TASKS -> VIEW TASK -->
+        <section id="sec-tasks-view" class="page-section anim-section hidden space-y-4">
+          <h2 class="text-lg font-bold">Tasks — View Task</h2>
+          <% if (microTasks.length === 0) { %>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 text-xs text-slate-500">No tasks available right now.</div>
+          <% } %>
           <% microTasks.forEach(task => { %>
-            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+            <div class="card-lift bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
               <div class="flex justify-between items-center mb-2">
-                <h3 class="font-bold text-base text-slate-800"><%= task.title %></h3>
-                <span class="bg-blue-50 text-[#1877f2] font-extrabold px-3 py-1 rounded text-xs">
+                <h3 class="font-bold text-base"><%= task.title %></h3>
+                <span class="bg-blue-50 dark:bg-blue-950 text-[#1877f2] font-extrabold px-3 py-1 rounded text-xs">
                   +<%= task.reward_points %> pts ($<%= (task.reward_points / 1000).toFixed(2) %>)
                 </span>
               </div>
-              <p class="text-xs text-slate-600 whitespace-pre-line mb-2"><%= task.instructions %></p>
-              <p class="text-xs text-amber-700 font-semibold mb-3">Required Proof: <%= task.proof_required %> (Slots left: <%= task.remaining_slots %>)</p>
+              <p class="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line mb-2"><%= task.instructions %></p>
+              <p class="text-xs text-amber-600 dark:text-amber-400 font-semibold mb-3">Required Proof: <%= task.proof_required %> (Slots left: <%= task.remaining_slots %>)</p>
               <form action="/api/tasks/submit" method="POST" class="grid sm:grid-cols-3 gap-2.5">
                 <input type="hidden" name="task_id" value="<%= task.id %>">
-                <input type="text" name="proof_text" required placeholder="Proof text / @username" class="border border-slate-300 rounded px-3 py-2 text-xs">
-                <input type="url" name="screenshot_url" placeholder="Screenshot URL (optional)" class="border border-slate-300 rounded px-3 py-2 text-xs">
-                <button type="submit" class="bg-[#1877f2] hover:bg-blue-700 text-white font-bold rounded py-2 text-xs">Submit Proof</button>
+                <input type="text" name="proof_text" required placeholder="Proof text / @username" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
+                <input type="url" name="screenshot_url" placeholder="Screenshot URL (optional)" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
+                <button type="submit" class="bg-[#1877f2] hover:bg-blue-700 text-white font-bold rounded-lg py-2 text-xs">Submit Proof</button>
               </form>
             </div>
           <% }) %>
         </section>
 
-        <section id="sec-clicks" class="page-section hidden grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- TASKS -> MY SUBMISSION -->
+        <section id="sec-tasks-submissions" class="page-section anim-section hidden space-y-4">
+          <h2 class="text-lg font-bold">Tasks — My Submission</h2>
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-2.5 text-xs">
+            <% if (submissions.length === 0) { %>
+              <p class="text-slate-500">No submissions yet.</p>
+            <% } %>
+            <% submissions.forEach(s => { %>
+              <div class="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg flex flex-wrap justify-between items-center gap-2">
+                <div>
+                  <div class="font-bold">#<%= s.id %> — <%= s.title %> (+<%= s.reward_points %> pts / $<%= (s.reward_points / 1000).toFixed(2) %>)</div>
+                  <div class="text-slate-500">Proof: <%= s.proof_text %></div>
+                </div>
+                <span class="font-bold uppercase px-2.5 py-1 rounded <%= s.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : (s.status === 'rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800') %>"><%= s.status %></span>
+              </div>
+            <% }) %>
+          </div>
+        </section>
+
+        <!-- TASKS -> MY DISPUTES -->
+        <section id="sec-tasks-disputes" class="page-section anim-section hidden space-y-5">
+          <h2 class="text-lg font-bold">Tasks — My Disputes</h2>
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+            <h3 class="font-bold text-sm text-[#1877f2]">Open a New Dispute</h3>
+            <form action="/api/disputes/create" method="POST" class="space-y-3 text-xs">
+              <div class="grid sm:grid-cols-2 gap-3">
+                <select name="category" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
+                  <option value="task_proof">Task Proof Dispute</option>
+                  <option value="withdrawal">Withdrawal Dispute</option>
+                  <option value="ad_campaign">Ad Campaign Dispute</option>
+                </select>
+                <input type="text" name="reference_id" placeholder="Submission / Withdrawal ID (optional)" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
+              </div>
+              <input type="text" name="subject" required placeholder="Dispute Subject" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
+              <textarea name="details" rows="2" required placeholder="Explain why your task/request should be reviewed..." class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2"></textarea>
+              <button type="submit" class="bg-[#1877f2] hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg">Submit Dispute</button>
+            </form>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-2.5 text-xs">
+            <h3 class="font-bold text-sm">My Dispute History</h3>
+            <% if (disputes.length === 0) { %><p class="text-slate-500">No disputes filed.</p><% } %>
+            <% disputes.forEach(d => { %>
+              <div class="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg space-y-1">
+                <div class="flex justify-between items-center">
+                  <span class="font-bold">#<%= d.id %> — <%= d.subject %> (<%= d.category %>)</span>
+                  <span class="uppercase font-bold <%= d.status === 'resolved' ? 'text-emerald-600' : 'text-amber-600' %>"><%= d.status %></span>
+                </div>
+                <p class="text-slate-600 dark:text-slate-400"><%= d.details %></p>
+                <% if (d.admin_response) { %><p class="text-[#1877f2] font-semibold">Admin Reply: <%= d.admin_response %></p><% } %>
+              </div>
+            <% }) %>
+          </div>
+        </section>
+
+        <!-- SHORTLINKS SECTION -->
+        <section id="sec-shortlinks" class="page-section anim-section hidden space-y-4">
+          <h2 class="text-lg font-bold">Shortlinks Tasks <span class="text-xs font-normal text-slate-500">(1,000 pts = $1.00)</span></h2>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <% shortlinks.forEach(sl => { %>
+              <div class="card-lift bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between space-y-3 text-xs">
+                <div>
+                  <div class="flex justify-between items-center mb-1">
+                    <h3 class="font-bold text-sm"><%= sl.title %></h3>
+                    <span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">+<%= sl.reward_points %> pts</span>
+                  </div>
+                  <p class="text-slate-500">Claimed today: <%= sl.claimed_today %> / <%= sl.daily_limit %></p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <a href="<%= sl.target_url %>" target="_blank" class="flex-1 text-center bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 font-bold py-2 rounded-lg">Open Link</a>
+                  <form action="/api/shortlinks/claim" method="POST" class="flex-1">
+                    <input type="hidden" name="shortlink_id" value="<%= sl.id %>">
+                    <button type="submit" <%= sl.claimed_today >= sl.daily_limit ? 'disabled' : '' %> class="w-full bg-[#1877f2] hover:bg-blue-700 disabled:opacity-40 text-white font-bold py-2 rounded-lg">Claim</button>
+                  </form>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        </section>
+
+        <!-- SURVEYS -->
+        <section id="sec-surveys" class="page-section anim-section hidden">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
+            <h2 class="font-bold text-base mb-1">Surveys & Offerwalls</h2>
+            <p class="text-xs text-slate-500 mb-3">1,000 Points = $1.00. Pass <code>subid=<%= user.public_id %></code> to your offerwall provider.</p>
+            <iframe src="https://fastsvr.com/list/528412?subid=<%= user.public_id %>" class="w-full h-[540px] rounded-lg border border-slate-200 dark:border-slate-800"></iframe>
+          </div>
+        </section>
+
+        <!-- CLICKS -->
+        <section id="sec-clicks" class="page-section anim-section hidden grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           <% ptcAds.forEach(ad => { %>
-            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm flex flex-col justify-between">
+            <div class="card-lift bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between">
               <div>
                 <div class="flex justify-between items-start gap-2 mb-1.5">
-                  <h3 class="font-bold text-sm text-slate-800"><%= ad.title %></h3>
+                  <h3 class="font-bold text-sm"><%= ad.title %></h3>
                   <span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded text-xs">+<%= ad.reward_points %> pts</span>
                 </div>
                 <p class="text-xs text-slate-500 mb-3"><%= ad.description || 'Wait for timer to earn.' %></p>
               </div>
-              <button onclick="startPtc(<%= ad.id %>, '<%= ad.url %>', <%= ad.timer_seconds %>)" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2 rounded text-xs">
+              <button onclick="startPtc(<%= ad.id %>, '<%= ad.url %>', <%= ad.timer_seconds %>)" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs">
                 View (<%= ad.timer_seconds %>s) • $<%= (ad.reward_points / 1000).toFixed(3) %>
               </button>
             </div>
           <% }) %>
         </section>
 
-        <section id="sec-surveys" class="page-section hidden">
-          <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-            <h2 class="font-bold text-base mb-1">Surveys & Offerwalls</h2>
-            <p class="text-xs text-slate-500 mb-3">1,000 Points = $1.00. Pass <code>subid=<%= user.id %></code> to your offerwall provider.</p>
-            <iframe src="https://fastsvr.com/list/528412?subid=<%= user.id %>" class="w-full h-[540px] rounded border border-slate-200"></iframe>
-          </div>
-        </section>
-
-        <section id="sec-advertise" class="page-section hidden grid lg:grid-cols-2 gap-5">
-          <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
-            <h2 class="font-bold text-base text-[#1877f2]">1. Add USDT to Central Admin Wallet for Advertising</h2>
-            <p class="text-xs text-slate-600">
-              All deposited USDT goes into the <strong>single central wallet controlled by Admin</strong>. Rate: <strong>1,000 Ad Credits = $1.00 USDT</strong>.
+        <!-- BUY POINTS / ADVERTISE -->
+        <section id="sec-advertise" class="page-section anim-section hidden grid lg:grid-cols-2 gap-5">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+            <h2 class="font-bold text-base text-[#1877f2]">1. Add USDT to Central Admin Wallet</h2>
+            <p class="text-xs text-slate-600 dark:text-slate-300">
+              All USDT balance is held in <strong>one central wallet controlled by Admin</strong>. Rate: <strong>1,000 Ad Credits = $1.00 USDT</strong>.
             </p>
             <form action="/api/wallet/deposit-usdt" method="POST" class="space-y-3">
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">USDT Amount (USD)</label>
-                <input type="number" step="0.01" min="0.10" name="usdt_amount" value="5.00" required class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
+                <label class="block text-xs font-semibold mb-1">USDT Amount (USD)</label>
+                <input type="number" step="0.01" min="0.10" name="usdt_amount" value="5.00" required class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Deposit TxID / Reference</label>
-                <input type="text" name="tx_ref" placeholder="Paste USDT transfer hash or reference" class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
+                <label class="block text-xs font-semibold mb-1">Deposit TxID / Reference</label>
+                <input type="text" name="tx_ref" placeholder="USDT transaction hash / reference" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
               </div>
-              <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded text-xs">
-                Add USDT & Convert to Ad Credits (1,000 pts = $1)
+              <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-xs">
+                Add USDT to Central Wallet (1,000 pts = $1)
               </button>
             </form>
           </div>
 
-          <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
-            <h2 class="font-bold text-base text-slate-800">2. Create PTC Ad (Uses Ad Credits)</h2>
-            <p class="text-xs text-slate-500">Your Ad Credits: <strong><%= user.advertiser_balance %> pts</strong> ($<%= (user.advertiser_balance / 1000).toFixed(2) %>). Campaigns require Admin approval.</p>
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+            <h2 class="font-bold text-base">2. Create PTC Ad (Uses Ad Credits)</h2>
+            <p class="text-xs text-slate-500">Ad Credits: <strong><%= user.advertiser_balance %> pts</strong> ($<%= (user.advertiser_balance / 1000).toFixed(2) %>). Requires Admin approval.</p>
             <form action="/api/advertiser/create-ptc" method="POST" class="space-y-2.5">
-              <input type="text" name="title" required placeholder="Ad Title" class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
-              <input type="text" name="description" placeholder="Description" class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
-              <input type="url" name="url" required placeholder="https://example.com" class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
+              <input type="text" name="title" required placeholder="Ad Title" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
+              <input type="text" name="description" placeholder="Description" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
+              <input type="url" name="url" required placeholder="https://example.com" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
               <div class="grid grid-cols-3 gap-2">
-                <input type="number" name="timer_seconds" value="15" min="5" class="border border-slate-300 rounded px-2.5 py-2 text-xs" placeholder="Sec">
-                <input type="number" name="reward_points" value="10" min="1" class="border border-slate-300 rounded px-2.5 py-2 text-xs" placeholder="Pts">
-                <input type="number" name="total_views" value="20" min="1" class="border border-slate-300 rounded px-2.5 py-2 text-xs" placeholder="Views">
+                <input type="number" name="timer_seconds" value="15" min="5" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-2 text-xs" placeholder="Sec">
+                <input type="number" name="reward_points" value="10" min="1" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-2 text-xs" placeholder="Pts">
+                <input type="number" name="total_views" value="20" min="1" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-2 text-xs" placeholder="Views">
               </div>
-              <button type="submit" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2.5 rounded text-xs">Submit Ad for Approval</button>
+              <button type="submit" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-xs">Submit Ad for Approval</button>
             </form>
           </div>
         </section>
 
-        <section id="sec-referrals" class="page-section hidden">
-          <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-4">
-            <h2 class="font-bold text-base">Referral System (Earn 10% Commission)</h2>
-            <div class="bg-slate-50 border border-slate-200 rounded p-3 text-xs">
-              <div class="text-slate-500 mb-1">Your Referral Link:</div>
-              <code class="text-[#1877f2] font-bold">https://<%= user.email ? 'freefaucet.onrender.com' : '' %>/?ref=<%= user.referral_code %></code>
-              <div class="text-slate-500 mt-1">Code: <strong><%= user.referral_code %></strong> • Referred Users: <strong><%= referrals.length %></strong></div>
+        <!-- REFERRALS -->
+        <section id="sec-referrals" class="page-section anim-section hidden">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+            <h2 class="font-bold text-base">Referral System (10% Commission)</h2>
+            <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-xs">
+              <div class="text-slate-500 mb-1">Referral Link:</div>
+              <code class="text-[#1877f2] font-bold">https://freefaucet.onrender.com/?ref=<%= user.public_id %></code>
+              <div class="text-slate-500 mt-1">Your 6-Digit User ID: <strong><%= user.public_id %></strong> • Referred: <strong><%= referrals.length %></strong></div>
             </div>
             <div class="text-xs space-y-1.5">
               <% referrals.forEach(r => { %>
-                <div class="py-1.5 border-b border-slate-100 flex justify-between">
+                <div class="py-1.5 border-b border-slate-100 dark:border-slate-800 flex justify-between">
                   <span><%= r.email %></span>
-                  <span class="text-slate-400">ID: <%= 795654 + r.id %></span>
+                  <span class="text-slate-400">ID: <%= r.public_id %></span>
                 </div>
               <% }) %>
             </div>
           </div>
         </section>
 
-        <section id="sec-history" class="page-section hidden space-y-4">
-          <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-            <h2 class="font-bold text-base mb-3">Task Submissions & Withdrawals History</h2>
-            <div class="space-y-2 text-xs">
-              <% submissions.forEach(s => { %>
-                <div class="p-2.5 bg-slate-50 rounded flex justify-between items-center">
-                  <span>Task: <strong><%= s.title %></strong> (+<%= s.reward_points %> pts)</span>
-                  <span class="font-bold uppercase text-slate-700"><%= s.status %></span>
-                </div>
-              <% }) %>
-              <% withdrawals.forEach(w => { %>
-                <div class="p-2.5 bg-slate-50 rounded flex justify-between items-center">
-                  <span>Withdraw: <strong><%= w.points_amount %> pts</strong> ($<%= Number(w.usd_amount).toFixed(2) %>) → <%= w.wallet_address %></span>
-                  <span class="font-bold uppercase <%= w.status === 'approved' ? 'text-emerald-600' : (w.status === 'rejected' ? 'text-rose-600' : 'text-amber-600') %>"><%= w.status %></span>
-                </div>
-              <% }) %>
-            </div>
-          </div>
-        </section>
-
-        <section id="sec-withdraw" class="page-section hidden max-w-lg">
-          <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
+        <!-- WITHDRAW -->
+        <section id="sec-withdraw" class="page-section anim-section hidden max-w-lg space-y-4">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
             <h2 class="font-bold text-base text-[#1877f2]">Request Withdrawal (Admin Approval Required)</h2>
-            <p class="text-xs text-slate-600">
-              Rate: <strong>1,000 Points = $1.00</strong> (Min 100 pts = $0.10). <strong>Withdrawals are NOT processed automatically</strong>—they stay pending until Admin approves.
+            <p class="text-xs text-slate-600 dark:text-slate-300">
+              Rate: <strong>1,000 Points = $1.00</strong> (Min 100 pts = $0.10). Withdrawals stay <strong>pending</strong> until Admin approves.
             </p>
             <form action="/api/withdraw/request" method="POST" class="space-y-3">
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Payout Method</label>
-                <input type="text" name="payout_method" value="USDT (TRC20 / FaucetPay)" class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
+                <label class="block text-xs font-semibold mb-1">Payout Method</label>
+                <input type="text" name="payout_method" value="USDT (TRC20 / FaucetPay)" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">USDT / FaucetPay Wallet Address</label>
-                <input type="text" name="wallet_address" value="<%= user.faucetpay_address || '' %>" required class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
+                <label class="block text-xs font-semibold mb-1">USDT / FaucetPay Wallet Address</label>
+                <input type="text" name="wallet_address" value="<%= user.faucetpay_address || '' %>" required class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Points to Withdraw (Max: <%= user.points_balance %>)</label>
-                <input type="number" name="points_amount" min="100" max="<%= user.points_balance %>" value="1000" required class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
+                <label class="block text-xs font-semibold mb-1">Points to Withdraw (Max: <%= user.points_balance %>)</label>
+                <input type="number" name="points_amount" min="100" max="<%= user.points_balance %>" value="1000" required class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
               </div>
-              <button type="submit" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2.5 rounded text-xs">
-                Submit Withdrawal Request for Admin Approval
+              <button type="submit" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-xs">
+                Submit Withdrawal Request
               </button>
             </form>
           </div>
+
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-2 text-xs">
+            <h3 class="font-bold text-sm">My Withdrawal Requests</h3>
+            <% withdrawals.forEach(w => { %>
+              <div class="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-lg flex justify-between items-center">
+                <span>#<%= w.id %> — <strong><%= w.points_amount %> pts</strong> ($<%= Number(w.usd_amount).toFixed(2) %>)</span>
+                <span class="font-bold uppercase <%= w.status === 'approved' ? 'text-emerald-600' : (w.status === 'rejected' ? 'text-rose-600' : 'text-amber-600') %>"><%= w.status %></span>
+              </div>
+            <% }) %>
+          </div>
         </section>
 
-        <section id="sec-profile" class="page-section hidden max-w-lg">
-          <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-4">
+        <!-- PROFILE -->
+        <section id="sec-profile" class="page-section anim-section hidden max-w-lg">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
             <div class="flex items-center space-x-3">
               <div class="w-12 h-12 rounded-full bg-[#1877f2] text-white font-black flex items-center justify-center text-lg">
                 <%= user.email.charAt(0).toUpperCase() %>
               </div>
               <div>
                 <h2 class="font-bold text-base"><%= user.email %></h2>
-                <p class="text-xs text-slate-500">User Id: <%= 795654 + user.id %> • Referral Code: <%= user.referral_code %></p>
+                <p class="text-xs text-slate-500">User ID: <%= user.public_id %> • Referral: <%= user.referral_code %></p>
               </div>
             </div>
-            <form action="/api/profile/update" method="POST" class="space-y-3 pt-3 border-t border-slate-200">
+            <form action="/api/profile/update" method="POST" class="space-y-3 pt-3 border-t border-slate-200 dark:border-slate-800">
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Default USDT / FaucetPay Address</label>
-                <input type="text" name="faucetpay_address" value="<%= user.faucetpay_address || '' %>" class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
+                <label class="block text-xs font-semibold mb-1">Default USDT / FaucetPay Address</label>
+                <input type="text" name="faucetpay_address" value="<%= user.faucetpay_address || '' %>" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
               </div>
-              <label class="flex items-center space-x-2 text-xs font-medium text-slate-700">
+              <label class="flex items-center space-x-2 text-xs font-medium">
                 <input type="checkbox" name="email_notifications" <%= user.email_notifications ? 'checked' : '' %>>
-                <span>Send email notifications for withdrawals, approvals & account alerts</span>
+                <span>Send email notifications for withdrawals, approvals & disputes</span>
               </label>
-              <button type="submit" class="bg-[#1877f2] hover:bg-blue-700 text-white font-bold px-4 py-2 rounded text-xs">Save Profile</button>
+              <button type="submit" class="bg-[#1877f2] hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs">Save Profile</button>
             </form>
           </div>
         </section>
 
-        <section id="sec-inbox" class="page-section hidden max-w-2xl">
-          <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
+        <!-- INBOX -->
+        <section id="sec-inbox" class="page-section anim-section hidden max-w-2xl">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
             <div class="flex justify-between items-center">
               <h2 class="font-bold text-base">Inbox & Notifications</h2>
               <form action="/api/notifications/read" method="POST">
                 <button class="text-xs text-[#1877f2] font-bold hover:underline">Mark All Read</button>
               </form>
             </div>
-            <% if (notifications.length === 0) { %>
-              <p class="text-xs text-slate-500">No notifications yet.</p>
-            <% } %>
+            <% if (notifications.length === 0) { %><p class="text-xs text-slate-500">No notifications yet.</p><% } %>
             <% notifications.forEach(n => { %>
-              <div class="p-3 rounded border <%= n.is_read ? 'bg-slate-50 border-slate-200' : 'bg-blue-50 border-blue-200' %> text-xs">
-                <div class="font-bold text-slate-800"><%= n.title %></div>
-                <div class="text-slate-600 mt-0.5"><%= n.message %></div>
+              <div class="p-3 rounded-lg border <%= n.is_read ? 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800' : 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800' %> text-xs">
+                <div class="font-bold"><%= n.title %></div>
+                <div class="text-slate-600 dark:text-slate-300 mt-0.5"><%= n.message %></div>
               </div>
             <% }) %>
           </div>
         </section>
 
+        <!-- ADMIN PANEL -->
         <% if (isAdmin) { %>
-          <section id="sec-admin" class="page-section hidden space-y-6">
-            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-4">
+          <section id="sec-admin" class="page-section anim-section hidden space-y-6">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
               <div class="flex flex-wrap justify-between items-center gap-2">
                 <div>
-                  <h2 class="font-bold text-base text-slate-800">Central Admin USDT Treasury Wallet</h2>
+                  <h2 class="font-bold text-base">Central Admin USDT Treasury Wallet</h2>
                   <p class="text-xs text-slate-500">Single central USDT pool controlled by Admin (1,000 pts = $1.00).</p>
                 </div>
-                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 font-extrabold px-4 py-2 rounded-lg text-sm">
+                <div class="bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-extrabold px-4 py-2 rounded-lg text-sm">
                   Central Wallet: $<%= Number(stats.centralUsdt).toFixed(2) %> USDT
                 </div>
               </div>
-
-              <form action="/api/admin/treasury/topup" method="POST" class="grid sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-100">
-                <input type="email" name="target_email" placeholder="User email to credit pts (optional)" class="border border-slate-300 rounded px-3 py-2 text-xs">
-                <input type="number" step="0.01" name="usdt_amount" required placeholder="USDT Amount ($)" class="border border-slate-300 rounded px-3 py-2 text-xs">
-                <input type="text" name="tx_ref" placeholder="TxHash / Note" class="border border-slate-300 rounded px-3 py-2 text-xs">
-                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded py-2 text-xs">Record Central USDT</button>
+              <form action="/api/admin/treasury/topup" method="POST" class="grid sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <input type="text" name="target_email" placeholder="User email or 6-digit ID (optional)" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
+                <input type="number" step="0.01" name="usdt_amount" required placeholder="USDT Amount ($)" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
+                <input type="text" name="tx_ref" placeholder="TxHash / Note" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
+                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg py-2 text-xs">Record Central USDT</button>
               </form>
             </div>
 
-            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
-              <h3 class="font-bold text-base text-rose-700">💳 Pending Withdrawal Requests (<%= pendingWithdrawals.length %>) — Approve to Process</h3>
-              <% if (pendingWithdrawals.length === 0) { %>
-                <p class="text-xs text-slate-500">No pending withdrawal requests.</p>
-              <% } %>
+            <!-- PENDING WITHDRAWALS -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+              <h3 class="font-bold text-base text-rose-600 dark:text-rose-400">💳 Pending Withdrawals (<%= pendingWithdrawals.length %>) — Admin Approval Required</h3>
+              <% if (pendingWithdrawals.length === 0) { %><p class="text-xs text-slate-500">No pending withdrawals.</p><% } %>
               <% pendingWithdrawals.forEach(w => { %>
-                <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div class="p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                   <div>
-                    <div class="font-bold text-slate-800"><%= w.email %> (ID: <%= 795654 + w.user_id %>)</div>
-                    <div class="text-slate-600 mt-0.5">
-                      Amount: <strong><%= w.points_amount %> pts ($<%= Number(w.usd_amount).toFixed(2) %>)</strong> • Method: <%= w.payout_method %>
-                    </div>
-                    <div class="text-[#1877f2] font-semibold mt-0.5">Wallet: <%= w.wallet_address %></div>
+                    <div class="font-bold"><%= w.email %> (ID: <%= w.public_id %>)</div>
+                    <div class="text-slate-500">Amount: <strong><%= w.points_amount %> pts ($<%= Number(w.usd_amount).toFixed(2) %>)</strong> • <%= w.payout_method %></div>
+                    <div class="text-[#1877f2] font-semibold">Wallet: <%= w.wallet_address %></div>
                   </div>
                   <form action="/api/admin/withdrawals/review" method="POST" class="flex flex-wrap items-center gap-2">
                     <input type="hidden" name="withdrawal_id" value="<%= w.id %>">
-                    <input type="text" name="admin_note" placeholder="Note / TxID" class="border border-slate-300 rounded px-2.5 py-1.5 text-xs w-32">
-                    <button name="action" value="approve" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded">Approve Payout</button>
+                    <input type="text" name="admin_note" placeholder="Note / TxID" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2.5 py-1.5 text-xs w-28">
+                    <button name="action" value="approve" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded">Approve</button>
                     <button name="action" value="reject" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-1.5 rounded">Reject & Refund</button>
                   </form>
                 </div>
               <% }) %>
             </div>
 
-            <div class="grid lg:grid-cols-2 gap-5">
-              <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-                <h3 class="font-bold text-sm text-[#1877f2] mb-3">➕ Add New Task</h3>
-                <form action="/api/admin/tasks/create" method="POST" class="space-y-2.5">
-                  <input type="text" name="title" required placeholder="Task Title" class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
-                  <textarea name="instructions" rows="2" required placeholder="Task Instructions" class="w-full border border-slate-300 rounded px-3 py-2 text-xs"></textarea>
-                  <input type="text" name="proof_required" required placeholder="Required Proof" class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
+            <!-- ADD TASK / PTC / SHORTLINK FORMS -->
+            <div class="grid lg:grid-cols-3 gap-4">
+              <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
+                <h3 class="font-bold text-sm text-[#1877f2] mb-2.5">➕ Add Micro-Task</h3>
+                <form action="/api/admin/tasks/create" method="POST" class="space-y-2 text-xs">
+                  <input type="text" name="title" required placeholder="Task Title" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-3 py-2">
+                  <textarea name="instructions" rows="2" required placeholder="Instructions" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-3 py-2"></textarea>
+                  <input type="text" name="proof_required" required placeholder="Required Proof" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-3 py-2">
                   <div class="grid grid-cols-2 gap-2">
-                    <input type="number" name="reward_points" value="100" min="1" placeholder="Reward Pts (1000=$1)" class="border border-slate-300 rounded px-3 py-2 text-xs">
-                    <input type="number" name="total_slots" value="50" min="1" placeholder="Slots" class="border border-slate-300 rounded px-3 py-2 text-xs">
+                    <input type="number" name="reward_points" value="100" min="1" placeholder="Pts" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2.5 py-2">
+                    <input type="number" name="total_slots" value="50" min="1" placeholder="Slots" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2.5 py-2">
                   </div>
-                  <button type="submit" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2 rounded text-xs">Publish Task</button>
+                  <button type="submit" class="w-full bg-[#1877f2] hover:bg-blue-700 text-white font-bold py-2 rounded">Publish Task</button>
                 </form>
               </div>
 
-              <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-                <h3 class="font-bold text-sm text-[#1877f2] mb-3">➕ Add Instant PTC Ad</h3>
-                <form action="/api/admin/ptc/create" method="POST" class="space-y-2.5">
-                  <input type="text" name="title" required placeholder="PTC Headline" class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
-                  <input type="text" name="description" placeholder="Description" class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
-                  <input type="url" name="url" required placeholder="https://target.com" class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
-                  <div class="grid grid-cols-3 gap-2">
-                    <input type="number" name="timer_seconds" value="15" min="5" placeholder="Sec" class="border border-slate-300 rounded px-2.5 py-2 text-xs">
-                    <input type="number" name="reward_points" value="10" min="1" placeholder="Pts" class="border border-slate-300 rounded px-2.5 py-2 text-xs">
-                    <input type="number" name="total_views" value="100" min="1" placeholder="Views" class="border border-slate-300 rounded px-2.5 py-2 text-xs">
+              <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
+                <h3 class="font-bold text-sm text-emerald-600 mb-2.5">➕ Add PTC Ad</h3>
+                <form action="/api/admin/ptc/create" method="POST" class="space-y-2 text-xs">
+                  <input type="text" name="title" required placeholder="PTC Title" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-3 py-2">
+                  <input type="text" name="description" placeholder="Description" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-3 py-2">
+                  <input type="url" name="url" required placeholder="https://target.com" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-3 py-2">
+                  <div class="grid grid-cols-3 gap-1.5">
+                    <input type="number" name="timer_seconds" value="15" min="5" placeholder="Sec" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-2">
+                    <input type="number" name="reward_points" value="10" min="1" placeholder="Pts" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-2">
+                    <input type="number" name="total_views" value="100" min="1" placeholder="Views" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-2">
                   </div>
-                  <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded text-xs">Publish PTC Ad</button>
+                  <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded">Publish PTC</button>
+                </form>
+              </div>
+
+              <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
+                <h3 class="font-bold text-sm text-indigo-500 mb-2.5">➕ Add Shortlink</h3>
+                <form action="/api/admin/shortlinks/create" method="POST" class="space-y-2 text-xs">
+                  <input type="text" name="title" required placeholder="Shortlink Title" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-3 py-2">
+                  <input type="url" name="target_url" required placeholder="https://shortlink-url.com" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-3 py-2">
+                  <div class="grid grid-cols-2 gap-2">
+                    <input type="number" name="reward_points" value="50" min="1" placeholder="Pts" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2.5 py-2">
+                    <input type="number" name="daily_limit" value="5" min="1" placeholder="Daily Limit" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2.5 py-2">
+                  </div>
+                  <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded">Add Shortlink</button>
                 </form>
               </div>
             </div>
 
-            <div class="grid lg:grid-cols-2 gap-5">
-              <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
-                <h3 class="font-bold text-sm text-amber-700">📢 Pending Advertiser Ads (<%= pendingAds.length %>)</h3>
+            <!-- PENDING ADS, PROOFS & OPEN DISPUTES -->
+            <div class="grid lg:grid-cols-3 gap-4">
+              <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-2.5 text-xs">
+                <h3 class="font-bold text-amber-600">📢 Pending Advertiser Ads (<%= pendingAds.length %>)</h3>
                 <% pendingAds.forEach(ad => { %>
-                  <div class="p-3 bg-slate-50 border border-slate-200 rounded text-xs space-y-1.5">
-                    <div class="font-bold"><%= ad.title %> <span class="text-slate-400">by <%= ad.advertiser_email %></span></div>
+                  <div class="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded space-y-1">
+                    <div class="font-bold"><%= ad.title %> <span class="text-slate-400">(ID: <%= ad.advertiser_public_id || '-' %>)</span></div>
                     <div class="text-[#1877f2] truncate"><%= ad.url %></div>
-                    <div class="text-slate-600">Cost: <%= ad.total_cost %> pts ($<%= ((ad.total_cost || 0) / 1000).toFixed(2) %>) • Views: <%= ad.remaining_views %></div>
+                    <div>Cost: <%= ad.total_cost %> pts ($<%= ((ad.total_cost || 0) / 1000).toFixed(2) %>)</div>
                     <form action="/api/admin/ads/review" method="POST" class="flex gap-2 pt-1">
                       <input type="hidden" name="ad_id" value="<%= ad.id %>">
-                      <button name="action" value="approve" class="bg-emerald-600 text-white font-bold px-3 py-1 rounded">Approve</button>
-                      <button name="action" value="reject" class="bg-rose-600 text-white font-bold px-3 py-1 rounded">Reject & Refund</button>
+                      <button name="action" value="approve" class="bg-emerald-600 text-white font-bold px-2.5 py-1 rounded">Approve</button>
+                      <button name="action" value="reject" class="bg-rose-600 text-white font-bold px-2.5 py-1 rounded">Reject</button>
                     </form>
                   </div>
                 <% }) %>
               </div>
 
-              <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
-                <h3 class="font-bold text-sm text-emerald-700">✅ Pending User Task Proofs (<%= pendingProofs.length %>)</h3>
+              <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-2.5 text-xs">
+                <h3 class="font-bold text-emerald-600">✅ Pending Task Proofs (<%= pendingProofs.length %>)</h3>
                 <% pendingProofs.forEach(p => { %>
-                  <div class="p-3 bg-slate-50 border border-slate-200 rounded text-xs space-y-1.5">
-                    <div class="font-bold"><%= p.title %> (+<%= p.reward_points %> pts)</div>
-                    <div class="text-slate-500">User: <%= p.email %> • Proof: <strong class="text-slate-800"><%= p.proof_text %></strong></div>
-                    <% if (p.screenshot_url) { %><a href="<%= p.screenshot_url %>" target="_blank" class="text-[#1877f2] underline block">View Screenshot</a><% } %>
+                  <div class="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded space-y-1">
+                    <div class="font-bold">#<%= p.id %> — <%= p.title %> (+<%= p.reward_points %> pts)</div>
+                    <div class="text-slate-500">User ID: <%= p.public_id %> • Proof: <strong><%= p.proof_text %></strong></div>
                     <form action="/api/admin/proofs/review" method="POST" class="flex gap-2 pt-1">
                       <input type="hidden" name="submission_id" value="<%= p.id %>">
-                      <button name="action" value="approve" class="bg-emerald-600 text-white font-bold px-3 py-1 rounded">Approve</button>
-                      <button name="action" value="reject" class="bg-rose-600 text-white font-bold px-3 py-1 rounded">Reject</button>
+                      <button name="action" value="approve" class="bg-emerald-600 text-white font-bold px-2.5 py-1 rounded">Approve</button>
+                      <button name="action" value="reject" class="bg-rose-600 text-white font-bold px-2.5 py-1 rounded">Reject</button>
+                    </form>
+                  </div>
+                <% }) %>
+              </div>
+
+              <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-2.5 text-xs">
+                <h3 class="font-bold text-indigo-500">⚖️ Open Disputes (<%= openDisputesList.length %>)</h3>
+                <% openDisputesList.forEach(d => { %>
+                  <div class="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded space-y-1.5">
+                    <div class="font-bold">#<%= d.id %> — <%= d.subject %> (ID: <%= d.public_id %>)</div>
+                    <div class="text-slate-500"><%= d.details %></div>
+                    <form action="/api/admin/disputes/resolve" method="POST" class="space-y-1.5 pt-1">
+                      <input type="hidden" name="dispute_id" value="<%= d.id %>">
+                      <input type="text" name="admin_response" required placeholder="Admin resolution note..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1">
+                      <div class="flex gap-1.5">
+                        <input type="number" name="bonus_points" value="0" min="0" placeholder="Bonus pts" class="w-24 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1">
+                        <button type="submit" class="flex-1 bg-indigo-600 text-white font-bold px-2.5 py-1 rounded">Resolve</button>
+                      </div>
                     </form>
                   </div>
                 <% }) %>
@@ -594,7 +764,27 @@
       function showSection(name) {
         document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
         const el = document.getElementById('sec-' + name);
-        if (el) el.classList.remove('hidden');
+        if (el) {
+          el.classList.remove('hidden');
+          el.classList.remove('anim-section');
+          void el.offsetWidth;
+          el.classList.add('anim-section');
+        }
+        if (name && name.startsWith('tasks-')) {
+          const menu = document.getElementById('tasksDropdownMenu');
+          const chev = document.getElementById('tasksChevron');
+          if (menu && menu.classList.contains('hidden')) {
+            menu.classList.remove('hidden');
+            if (chev) chev.textContent = '▲';
+          }
+        }
+      }
+
+      function toggleTasksDropdown() {
+        const menu = document.getElementById('tasksDropdownMenu');
+        const chev = document.getElementById('tasksChevron');
+        menu.classList.toggle('hidden');
+        chev.textContent = menu.classList.contains('hidden') ? '▼' : '▲';
       }
 
       function toggleSidebar() {
@@ -651,5 +841,17 @@
       }
     </script>
   <% } %>
+
+  <script>
+    function applySavedTheme() {
+      const saved = localStorage.getItem('ff_theme') || 'light';
+      document.documentElement.classList.toggle('dark', saved === 'dark');
+    }
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('ff_theme', isDark ? 'dark' : 'light');
+    }
+    applySavedTheme();
+  </script>
 </body>
 </html>
